@@ -130,3 +130,32 @@ describe("readiness", () => {
     expect(JSON.stringify(r)).not.toMatch(/probability of passing \d|chance of passing/i);
   });
 });
+
+import { streakFromDates } from "@/server/learning/gamification";
+import { summarizeAttempt } from "@/server/assessment/summary";
+
+describe("streaks", () => {
+  const today = new Date("2026-03-10T15:00:00Z");
+  it("counts consecutive days ending today or yesterday", () => {
+    expect(streakFromDates(["2026-03-10", "2026-03-09", "2026-03-08"], today)).toBe(3);
+    expect(streakFromDates(["2026-03-09", "2026-03-08"], today)).toBe(2);
+    expect(streakFromDates(["2026-03-08"], today)).toBe(0);
+    expect(streakFromDates([], today)).toBe(0);
+  });
+});
+
+describe("attempt summary", () => {
+  it("computes topic, difficulty and time analysis with error suggestions", () => {
+    const s = summarizeAttempt([
+      { questionId: "1", topicId: "a", topicName: "A", difficulty: 1, isCorrect: true, answered: true, timeSpentSeconds: 60, estimatedSeconds: 90, confidence: 3, section: 0 },
+      { questionId: "2", topicId: "a", topicName: "A", difficulty: 3, isCorrect: false, answered: true, timeSpentSeconds: 10, estimatedSeconds: 90, confidence: 2, section: 0 },
+      { questionId: "3", topicId: "b", topicName: "B", difficulty: 2, isCorrect: false, answered: false, timeSpentSeconds: 0, estimatedSeconds: 90, confidence: null, section: 1 },
+      { questionId: "4", topicId: "b", topicName: "B", difficulty: 2, isCorrect: false, answered: true, timeSpentSeconds: 100, estimatedSeconds: 90, confidence: 3, section: 1 },
+    ]);
+    expect(s.scorePct).toBe(25);
+    expect(s.byTopic[0].topicId).toBe("b");
+    expect(s.bySection).toEqual([{ section: 0, correct: 1, total: 2 }, { section: 1, correct: 0, total: 2 }]);
+    expect(s.suggestedErrors).toEqual({ "2": "careless", "3": "not_attempted", "4": "conceptual" });
+    expect(s.confidence.confidentWrong).toBe(1);
+  });
+});
