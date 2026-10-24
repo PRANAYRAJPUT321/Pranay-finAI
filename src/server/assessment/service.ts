@@ -41,6 +41,7 @@ export const createAttemptSchema = z.object({
   minutes: z.coerce.number().int().min(1).max(600).optional(),
   similarToQuestionId: z.string().optional(),
   formulaId: z.string().optional(),
+  questionIds: z.array(z.string()).max(50).default([]),
   title: z.string().max(120).optional(),
   seed: z.number().int().optional(),
 });
@@ -72,6 +73,7 @@ export async function createAttempt(userId: string, raw: CreateAttemptInput) {
   const topicFilter = {
     ...(input.topicIds.length ? { topicId: { in: input.topicIds } } : {}),
     ...(input.formulaId ? { formulaId: input.formulaId } : {}),
+    ...(input.questionIds.length ? { id: { in: input.questionIds } } : {}),
   };
   let similarOutcome: string | null = null;
   let similarTopic: string | null = null;
@@ -138,7 +140,9 @@ export async function createAttempt(userId: string, raw: CreateAttemptInput) {
   }
 
   const poolQs: PoolQuestion[] = pool.map((q) => ({ id: q.id, topicId: q.topicId, difficulty: q.difficulty, itemSetId: q.itemSetId }));
-  const ids = selectQuestions(poolQs, {
+  const ids = input.questionIds.length
+    ? input.questionIds.filter((id) => pool.some((q) => q.id === id))
+    : selectQuestions(poolQs, {
     count,
     weights,
     excludeIds: exclude,

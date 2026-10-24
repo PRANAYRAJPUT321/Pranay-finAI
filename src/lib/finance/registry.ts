@@ -15,6 +15,7 @@ export interface CalcParam {
   kind: ParamKind;
   example: number | number[];
   hint?: string;
+  optional?: boolean;
 }
 
 export interface Calculator {
@@ -48,7 +49,7 @@ export const calculators: Calculator[] = [
       { name: "pv", label: "Present value", kind: "number", example: 1000 },
       { name: "rate", label: "Rate per period (decimal)", kind: "number", example: 0.05 },
       { name: "periods", label: "Number of periods", kind: "number", example: 10 },
-      { name: "pmt", label: "Payment per period", kind: "number", example: 0 },
+      { name: "pmt", label: "Payment per period", kind: "number", example: 0, optional: true },
     ],
     output: "money",
     compute: (a) => F.futureValue(n(a, "pv"), n(a, "rate"), n(a, "periods"), (a.pmt as number) ?? 0).toNumber(),
@@ -61,7 +62,7 @@ export const calculators: Calculator[] = [
       { name: "fv", label: "Future value", kind: "number", example: 1000 },
       { name: "rate", label: "Rate per period (decimal)", kind: "number", example: 0.06 },
       { name: "periods", label: "Number of periods", kind: "number", example: 5 },
-      { name: "pmt", label: "Payment per period", kind: "number", example: 0 },
+      { name: "pmt", label: "Payment per period", kind: "number", example: 0, optional: true },
     ],
     output: "money",
     compute: (a) => F.presentValue(n(a, "fv"), n(a, "rate"), n(a, "periods"), (a.pmt as number) ?? 0).toNumber(),
@@ -71,7 +72,7 @@ export const calculators: Calculator[] = [
     label: "Present value (annuity due)",
     description: "PV of level payments made at the start of each period.",
     params: [
-      { name: "pmt", label: "Payment per period", kind: "number", example: 1000 },
+      { name: "pmt", label: "Payment per period", kind: "number", example: 1000, optional: true },
       { name: "rate", label: "Rate per period (decimal)", kind: "number", example: 0.05 },
       { name: "periods", label: "Number of periods", kind: "number", example: 5 },
     ],
@@ -127,7 +128,7 @@ export const calculators: Calculator[] = [
     params: [
       { name: "beginPrice", label: "Beginning price", kind: "number", example: 50 },
       { name: "endPrice", label: "Ending price", kind: "number", example: 54 },
-      { name: "income", label: "Income received", kind: "number", example: 1 },
+      { name: "income", label: "Income received", kind: "number", example: 1, optional: true },
     ],
     output: "percent",
     compute: (a) => F.holdingPeriodReturn(n(a, "beginPrice"), n(a, "endPrice"), (a.income as number) ?? 0).toNumber(),
@@ -141,7 +142,7 @@ export const calculators: Calculator[] = [
       { name: "couponRate", label: "Annual coupon rate (decimal)", kind: "number", example: 0.06 },
       { name: "ytm", label: "Annual yield to maturity (decimal)", kind: "number", example: 0.05 },
       { name: "years", label: "Years to maturity", kind: "number", example: 5 },
-      { name: "frequency", label: "Coupons per year", kind: "number", example: 2 },
+      { name: "frequency", label: "Coupons per year", kind: "number", example: 2, optional: true },
     ],
     output: "money",
     compute: (a) =>
@@ -162,7 +163,7 @@ export const calculators: Calculator[] = [
       { name: "face", label: "Face value", kind: "number", example: 1000 },
       { name: "couponRate", label: "Annual coupon rate (decimal)", kind: "number", example: 0.05 },
       { name: "years", label: "Years to maturity", kind: "number", example: 5 },
-      { name: "frequency", label: "Coupons per year", kind: "number", example: 1 },
+      { name: "frequency", label: "Coupons per year", kind: "number", example: 1, optional: true },
     ],
     output: "percent",
     compute: (a) =>
@@ -177,7 +178,7 @@ export const calculators: Calculator[] = [
       { name: "couponRate", label: "Annual coupon rate (decimal)", kind: "number", example: 0.05 },
       { name: "ytm", label: "Annual YTM (decimal)", kind: "number", example: 0.05 },
       { name: "years", label: "Years to maturity", kind: "number", example: 3 },
-      { name: "frequency", label: "Coupons per year", kind: "number", example: 1 },
+      { name: "frequency", label: "Coupons per year", kind: "number", example: 1, optional: true },
     ],
     output: "years",
     compute: (a) =>
@@ -198,7 +199,7 @@ export const calculators: Calculator[] = [
       { name: "couponRate", label: "Annual coupon rate (decimal)", kind: "number", example: 0.05 },
       { name: "ytm", label: "Annual YTM (decimal)", kind: "number", example: 0.05 },
       { name: "years", label: "Years to maturity", kind: "number", example: 3 },
-      { name: "frequency", label: "Coupons per year", kind: "number", example: 1 },
+      { name: "frequency", label: "Coupons per year", kind: "number", example: 1, optional: true },
     ],
     output: "years",
     compute: (a) =>
@@ -217,7 +218,7 @@ export const calculators: Calculator[] = [
     params: [
       { name: "modDuration", label: "Modified duration", kind: "number", example: 7.2 },
       { name: "yieldChange", label: "Yield change (decimal)", kind: "number", example: 0.005 },
-      { name: "convexity", label: "Convexity", kind: "number", example: 0 },
+      { name: "convexity", label: "Convexity", kind: "number", example: 0, optional: true },
     ],
     output: "percent",
     compute: (a) => F.durationPriceChange(n(a, "modDuration"), n(a, "yieldChange"), (a.convexity as number) ?? 0).toNumber(),
@@ -372,8 +373,8 @@ export const calculators: Calculator[] = [
       { name: "value", label: "Position value", kind: "number", example: 1000000 },
       { name: "sigmaPerPeriod", label: "Volatility per period (decimal)", kind: "number", example: 0.02 },
       { name: "confidence", label: "Confidence (0.95 or 0.99)", kind: "number", example: 0.95 },
-      { name: "periods", label: "Horizon (periods)", kind: "number", example: 1 },
-      { name: "meanPerPeriod", label: "Mean return per period (decimal)", kind: "number", example: 0 },
+      { name: "periods", label: "Horizon (periods)", kind: "number", example: 1, optional: true },
+      { name: "meanPerPeriod", label: "Mean return per period (decimal)", kind: "number", example: 0, optional: true },
     ],
     output: "money",
     compute: (a) =>

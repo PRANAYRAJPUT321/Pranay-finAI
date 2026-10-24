@@ -8,9 +8,11 @@ import { hasRole, CONTENT_ROLES } from "@/server/auth/guards";
 import { logoutAction } from "@/app/actions/auth";
 import { prisma } from "@/server/db";
 import { getPrimaryEnrollment } from "@/server/learning/enrollment";
+import { ensureDailyReminder } from "@/server/notifications/service";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const user = await requireUser();
+  await ensureDailyReminder(user.id);
   const [unread, enrollment] = await Promise.all([
     prisma.notification.count({ where: { userId: user.id, readAt: null } }),
     getPrimaryEnrollment(user.id),
