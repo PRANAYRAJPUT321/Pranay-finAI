@@ -12,7 +12,7 @@ import { createMistakeCards, recomputeProficiency, updateQuestionReviews } from 
 import { recordActivity } from "@/server/learning/gamification";
 import { gradeResponse, isAnswered } from "./grading";
 import { choicePayloadSchema, numericPayloadSchema, redactPayload, writtenPayloadSchema, type QType } from "./question-schema";
-import { selectQuestions, type PoolQuestion } from "./selection";
+import { createRng, selectQuestions, shuffle, type PoolQuestion } from "./selection";
 import { summarizeAttempt, type AttemptSummary } from "./summary";
 import { evaluateClock, remainingSeconds, sectionRemaining, totalElapsed, type TimedState } from "./timing";
 
@@ -40,6 +40,7 @@ export const createAttemptSchema = z.object({
   mockType: z.enum(["full", "half", "sectional", "custom"]).optional(),
   minutes: z.coerce.number().int().min(1).max(600).optional(),
   similarToQuestionId: z.string().optional(),
+  formulaId: z.string().optional(),
   title: z.string().max(120).optional(),
   seed: z.number().int().optional(),
 });
@@ -68,7 +69,10 @@ export async function createAttempt(userId: string, raw: CreateAttemptInput) {
   const structure = parseStructure(syllabus.structure);
   const now = new Date();
 
-  const topicFilter = input.topicIds.length ? { topicId: { in: input.topicIds } } : {};
+  const topicFilter = {
+    ...(input.topicIds.length ? { topicId: { in: input.topicIds } } : {}),
+    ...(input.formulaId ? { formulaId: input.formulaId } : {}),
+  };
   let similarOutcome: string | null = null;
   let similarTopic: string | null = null;
   if (input.similarToQuestionId) {
@@ -108,7 +112,8 @@ export async function createAttempt(userId: string, raw: CreateAttemptInput) {
   let sections: AttemptConfig["sections"];
   let count = input.count;
   let scaledNote: string | undefined;
-  if (input.kind === "MOCK" && input.mockType !== "custom") {
+  const structuredMock = input.kind === "MOCK" && (input.mockType === undefined || input.mockType === "full" || input.mockType === "half");
+  if (structuredMock) {
     const factor = input.mockType === "half" ? 0.5 : 1;
     const official = structure.sections.map((s) => ({ ...s, questionCount: Math.max(1, Math.round(s.questionCount * factor)), minutes: s.minutes === null ? null : Math.round(s.minutes * factor) }));
     const wanted = official.reduce((a, s) => a + s.questionCount, 0);
@@ -124,7 +129,7 @@ export async function createAttempt(userId: string, raw: CreateAttemptInput) {
     }
   } else {
     const seconds =
-      input.mode === "UNTIMED"
+      input.mode === "UNTIMED" && input.kind !== "MOCK"
         ? null
         : input.minutes
           ? input.minutes * 60
@@ -146,7 +151,7 @@ export async function createAttempt(userId: string, raw: CreateAttemptInput) {
   // Re-split selected questions into sections according to section sizes.
   if (sections.length === 1) {
     sections[0].itemCount = ids.length;
-    if (input.mode !== "UNTIMED" && sections[0].seconds === null) {
+    if ((input.mode !== "UNTIMED" || input.kind === "MOCK") && sections[0].seconds === null) {
       const est = new Map(pool.map((q) => [q.id, q.estimatedSeconds]));
       sections[0].seconds = ids.reduce((a, id) => a + (est.get(id) ?? 90), 0);
     }
@@ -306,30 +311,50 @@ export async function getAttemptView(userId: string, attemptId: string) {
           topicName: q.topic.name,
           context: q.context,
           itemSet: q.itemSet ? { id: q.itemSet.id, title: q.itemSet.title, vignette: q.itemSet.vignette } : null,
-          payload: redactPayload(type, q.payload),
+          payload: shuffledPayload(type, redactPayload(type, q.payload), it.id),
         },
-        feedback: revealed ? buildFeedback(it, lessons.get(q.topicId) ?? null) : null,
+        feedback: revealed ? withOrderedOptions(buildFeedback(it, lessons.get(q.topicId) ?? null), it.id) : null,
       };
     }),
   };
 }
 
+/** Stable per-item option order so the correct answer is not always in the same position. */
+function seedFromId(id: string) {
+  let h = 2166136261;
+  for (let i = 0; i < id.length; i++) h = Math.imul(h ^ id.charCodeAt(i), 16777619);
+  return h >>> 0;
+}
+
+function orderOptions<T extends { id: string }>(options: T[], itemId: string): T[] {
+  return shuffle(options, createRng(seedFromId(itemId)));
+}
+
 async function lessonLinks(topicIds: string[]) {
   const lessons = await prisma.lesson.findMany({
     where: { status: "PUBLISHED", OR: [{ topicId: { in: topicIds } }, { topic: { parentId: { in: topicIds } } }] },
-    select: { slug: true, title: true, topicId: true, topic: { select: { parentId: true } } },
+    select: { id: true, slug: true, title: true, topicId: true, topic: { select: { parentId: true } } },
   });
-  const map = new Map<string, { slug: string; title: string }>();
+  const map = new Map<string, { id: string; slug: string; title: string }>();
   for (const l of lessons) {
     const root = l.topic.parentId ?? l.topicId;
-    if (!map.has(root)) map.set(root, { slug: l.slug, title: l.title });
+    if (!map.has(root)) map.set(root, { id: l.id, slug: l.slug, title: l.title });
   }
   return map;
 }
 
+function shuffledPayload(type: QType, payload: ReturnType<typeof redactPayload>, itemId: string) {
+  if ((type === "MCQ" || type === "MULTI_SELECT") && "options" in payload && payload.options) return { ...payload, options: orderOptions(payload.options, itemId) };
+  return payload;
+}
+
+function withOrderedOptions<T extends { options: { id: string }[] | null }>(f: T, itemId: string): T {
+  return f.options ? { ...f, options: orderOptions(f.options, itemId) } : f;
+}
+
 type ItemWithQuestion = Prisma.AttemptItemGetPayload<{ include: { question: { include: { outcome: { select: { code: true; statement: true } }; formula: { select: { slug: true; name: true; expression: true } } } } } }>;
 
-function buildFeedback(it: ItemWithQuestion, lesson: { slug: string; title: string } | null) {
+function buildFeedback(it: ItemWithQuestion, lesson: { id: string; slug: string; title: string } | null) {
   const q = it.question;
   const type = q.type as QType;
   const base = {

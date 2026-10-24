@@ -9,6 +9,7 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  agentRules: false,
   serverExternalPackages: ["@prisma/client", "bcryptjs"],
   async headers() {
     return [{ source: "/:path*", headers: securityHeaders }];

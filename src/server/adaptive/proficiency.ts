@@ -93,7 +93,7 @@ export function classify(estimate: number, attempts: number, sessions: number, d
 
 export const MASTERY_LABEL: Record<Mastery, string> = {
   NOT_STARTED: "Not started",
-  INSUFFICIENT_EVIDENCE: "Not enough evidence yet",
+  INSUFFICIENT_EVIDENCE: "Low evidence",
   NEEDS_WORK: "Needs work",
   DEVELOPING: "Developing",
   PROFICIENT: "Proficient",
