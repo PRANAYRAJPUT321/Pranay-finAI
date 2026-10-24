@@ -39,7 +39,7 @@ export function AttemptRunner({ initial, enrollmentId }: { initial: AttemptView;
   const [remaining, setRemaining] = useState<number | null>(initial.sectionRemainingSeconds);
   const [busy, setBusy] = useState(false);
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const activeSince = useRef<number>(Date.now());
+  const activeSince = useRef<number>(0);
   const pendingSave = useRef<ReturnType<typeof setTimeout> | null>(null);
   const item = sectionItems[Math.min(index, sectionItems.length - 1)];
   const paused = view.status === "PAUSED";
@@ -99,8 +99,15 @@ export function AttemptRunner({ initial, enrollmentId }: { initial: AttemptView;
   }, [remaining === null, paused]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (remaining === 0) void refresh();
-  }, [remaining, refresh]);
+    activeSince.current = Date.now();
+  }, []);
+
+  // When the section clock should expire, ask the server what happens next.
+  useEffect(() => {
+    if (view.sectionRemainingSeconds === null || paused) return;
+    const t = setTimeout(() => void refresh(), view.sectionRemainingSeconds * 1000 + 750);
+    return () => clearTimeout(t);
+  }, [view.sectionRemainingSeconds, paused, refresh]);
 
   // Warn before leaving with an unsaved change.
   useEffect(() => {

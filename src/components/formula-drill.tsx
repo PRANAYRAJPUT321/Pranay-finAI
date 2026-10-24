@@ -1,11 +1,11 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { createCardAction } from "@/app/actions/content";
 import { Button, Card } from "./ui";
 
 export function FormulaDrill({ formulas }: { formulas: { id: string; name: string; expression: string; category: string; assumptions: string }[] }) {
-  const deck = useMemo(() => [...formulas].sort(() => Math.random() - 0.5), [formulas]);
+  const deck = formulas; // shuffled on the server
   const [i, setI] = useState(0);
   const [shown, setShown] = useState(false);
   const [missed, setMissed] = useState<string[]>([]);

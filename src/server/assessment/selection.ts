@@ -27,6 +27,11 @@ export function createRng(seed: number) {
   };
 }
 
+/** Shuffle with a fresh random seed (for non-reproducible orderings such as drills). */
+export function randomShuffle<T>(items: T[]): T[] {
+  return shuffle(items, createRng(crypto.getRandomValues(new Uint32Array(1))[0]));
+}
+
 export function shuffle<T>(items: T[], rng: () => number): T[] {
   const a = [...items];
   for (let i = a.length - 1; i > 0; i--) {

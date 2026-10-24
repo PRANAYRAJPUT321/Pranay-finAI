@@ -2,6 +2,7 @@ import { FormulaDrill } from "@/components/formula-drill";
 import { PageHeader } from "@/components/ui";
 import { requireUser } from "@/server/auth/current";
 import { prisma } from "@/server/db";
+import { randomShuffle } from "@/server/assessment/selection";
 
 export const metadata = { title: "Formula recall drill" };
 
@@ -16,7 +17,7 @@ export default async function DrillPage({ searchParams }: { searchParams: Promis
   return (
     <div className="mx-auto max-w-2xl">
       <PageHeader title="Formula recall drill" description="Active recall of formulas for your exams. Missed formulas can be added to your spaced-repetition flashcards. To practise applying formulas, use the practice buttons on each formula page." />
-      <FormulaDrill formulas={formulas} />
+      <FormulaDrill formulas={randomShuffle(formulas)} />
     </div>
   );
 }
