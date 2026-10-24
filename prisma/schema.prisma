@@ -1,0 +1,959 @@
+// PD FinPrep data model.
+// Conventions: cuid string ids, createdAt/updatedAt timestamps, explicit
+// indexes on foreign keys used for filtering, and cascade deletes only where
+// the child has no meaning without its parent (user-owned learning data).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Identity, access, security
+// ---------------------------------------------------------------------------
+
+enum Role {
+  STUDENT
+  CONTENT_MANAGER
+  ADMIN
+}
+
+enum Tier {
+  FREE
+  PLUS
+  PREMIUM
+}
+
+model User {
+  id                  String    @id @default(cuid())
+  email               String    @unique
+  name                String
+  passwordHash        String
+  role                Role      @default(STUDENT)
+  emailVerifiedAt     DateTime?
+  tier                Tier      @default(FREE)
+  // Preferences
+  gamificationEnabled Boolean   @default(true)
+  inAppReminders      Boolean   @default(true)
+  emailReminders      Boolean   @default(false)
+  explanationLevel    String    @default("intermediate") // beginner | intermediate | advanced
+  timezone            String    @default("UTC")
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+  lastActiveAt        DateTime?
+
+  sessions          Session[]
+  tokens            AuthToken[]
+  enrollments       Enrollment[]
+  attempts          Attempt[]
+  proficiencies     TopicProficiency[]
+  lessonProgress    LessonProgress[]
+  flashcards        Flashcard[]        @relation("FlashcardOwner")
+  cardStates        CardState[]
+  reviewLogs        ReviewLog[]
+  questionReviews   QuestionReviewState[]
+  bookmarks         Bookmark[]
+  notes             Note[]
+  studyLogs         StudyLog[]
+  tutorSessions     TutorSession[]
+  reports           ContentReport[]    @relation("ReportAuthor")
+  resolvedReports   ContentReport[]    @relation("ReportResolver")
+  notifications     Notification[]
+  achievements      Achievement[]
+  auditLogs         AuditLog[]
+  groupMemberships  StudyGroupMember[]
+  ownedGroups       StudyGroup[]
+  entitlements      Entitlement[]
+  questionVersions  QuestionVersion[]
+}
+
+model Session {
+  // id is the SHA-256 hash of the opaque token stored in the browser cookie,
+  // so a database leak does not expose usable session tokens.
+  id        String   @id
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  userAgent String?
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+enum AuthTokenType {
+  EMAIL_VERIFICATION
+  PASSWORD_RESET
+}
+
+model AuthToken {
+  id        String        @id @default(cuid())
+  tokenHash String        @unique
+  type      AuthTokenType
+  userId    String
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime      @default(now())
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, type])
+}
+
+model RateLimit {
+  key         String   @id
+  windowStart DateTime
+  count       Int
+}
+
+model AuditLog {
+  id         String   @id @default(cuid())
+  actorId    String?
+  action     String // e.g. question.update, answerKey.correct, user.role.change
+  entityType String
+  entityId   String
+  before     Json?
+  after      Json?
+  note       String?
+  createdAt  DateTime @default(now())
+  actor      User?    @relation(fields: [actorId], references: [id], onDelete: SetNull)
+
+  @@index([entityType, entityId])
+  @@index([createdAt])
+}
+
+model Entitlement {
+  id               String    @id @default(cuid())
+  userId           String
+  tier             Tier
+  source           String // "manual_admin_grant" | "billing_provider" (not integrated)
+  status           String    @default("active")
+  currentPeriodEnd DateTime?
+  createdAt        DateTime  @default(now())
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ---------------------------------------------------------------------------
+// Exam catalog and curriculum (configurable, versioned)
+// ---------------------------------------------------------------------------
+
+enum ExamFamily {
+  FINANCE_INVESTMENT
+  ACCOUNTING_AUDIT
+  TAXATION
+  BANKING_MARKETS
+  FINANCIAL_PLANNING
+  RISK
+}
+
+enum VerificationStatus {
+  VERIFIED
+  UNVERIFIED
+}
+
+enum SyllabusStatus {
+  DRAFT
+  CURRENT
+  ARCHIVED
+}
+
+enum LicenseType {
+  ORIGINAL // written for PD FinPrep
+  OFFICIAL_LINK // we only link to the official publisher
+  LICENSED // used under an explicit licence agreement
+  OPEN_LICENSE // e.g. CC-BY, public-domain government publications
+}
+
+model ContentSource {
+  id           String      @id @default(cuid())
+  title        String
+  publisher    String
+  url          String?
+  licenseType  LicenseType
+  licenseNotes String?
+  accessedAt   DateTime?
+  createdAt    DateTime    @default(now())
+
+  questions  Question[]
+  lessons    Lesson[]
+  pastPapers PastPaper[]
+}
+
+model ExamProgram {
+  id            String             @id @default(cuid())
+  slug          String             @unique
+  name          String
+  shortName     String
+  awardingBody  String
+  family        ExamFamily
+  country       String
+  jurisdiction  String?
+  description   String
+  officialUrl   String?
+  licensingNote String?
+  isActive      Boolean            @default(true)
+  createdAt     DateTime           @default(now())
+  updatedAt     DateTime           @updatedAt
+  levels        ExamLevel[]
+  enrollments   Enrollment[]
+  pastPapers    PastPaper[]
+}
+
+model ExamLevel {
+  id          String            @id @default(cuid())
+  programId   String
+  code        String // e.g. "L1", "PART1", "FAR"
+  name        String
+  order       Int
+  description String?
+  program     ExamProgram       @relation(fields: [programId], references: [id], onDelete: Cascade)
+  syllabi     SyllabusVersion[]
+  enrollments Enrollment[]
+  pastPapers  PastPaper[]
+
+  @@unique([programId, code])
+}
+
+model SyllabusVersion {
+  id                 String             @id @default(cuid())
+  levelId            String
+  versionLabel       String // e.g. "2026 curriculum"
+  status             SyllabusStatus     @default(DRAFT)
+  effectiveFrom      DateTime?
+  effectiveTo        DateTime?
+  verificationStatus VerificationStatus @default(UNVERIFIED)
+  verifiedAt         DateTime?
+  sourceUrl          String?
+  // Exam structure and rules. Validated by src/server/catalog/structure.ts
+  // (duration, sections, formats, scoring notes, calculator policy, mock blueprint).
+  structure          Json
+  recommendedHours   Int? // indicative study hours, used by the planner
+  notes              String?
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  level              ExamLevel          @relation(fields: [levelId], references: [id], onDelete: Cascade)
+  topics             Topic[]
+  questions          Question[]
+  itemSets           ItemSet[]
+  windows            ExamWindow[]
+  enrollments        Enrollment[]
+  attempts           Attempt[]
+
+  @@unique([levelId, versionLabel])
+}
+
+model ExamWindow {
+  id                   String          @id @default(cuid())
+  syllabusVersionId    String
+  label                String
+  startDate            DateTime
+  endDate              DateTime
+  registrationDeadline DateTime?
+  verified             Boolean         @default(false)
+  sourceUrl            String?
+  syllabus             SyllabusVersion @relation(fields: [syllabusVersionId], references: [id], onDelete: Cascade)
+
+  @@index([syllabusVersionId])
+}
+
+model Topic {
+  id                String            @id @default(cuid())
+  syllabusVersionId String
+  parentId          String?
+  code              String
+  name              String
+  order             Int
+  weightMin         Float? // official weighting range in percent, where published
+  weightMax         Float?
+  difficulty        Int               @default(2) // 1 easy .. 3 hard (editorial estimate)
+  description       String?
+  syllabus          SyllabusVersion   @relation(fields: [syllabusVersionId], references: [id], onDelete: Cascade)
+  parent            Topic?            @relation("TopicTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children          Topic[]           @relation("TopicTree")
+  outcomes          LearningOutcome[]
+  prerequisites     TopicPrerequisite[] @relation("TopicPrereqOf")
+  dependents        TopicPrerequisite[] @relation("TopicPrereq")
+  lessons           Lesson[]
+  questions         Question[]
+  itemSets          ItemSet[]
+  formulas          FormulaTopic[]
+  proficiencies     TopicProficiency[]
+  tasks             StudyTask[]
+  flashcards        Flashcard[]
+  notes             Note[]
+  tutorSessions     TutorSession[]
+
+  @@unique([syllabusVersionId, code])
+  @@index([parentId])
+}
+
+model TopicPrerequisite {
+  topicId        String
+  prerequisiteId String
+  topic          Topic  @relation("TopicPrereqOf", fields: [topicId], references: [id], onDelete: Cascade)
+  prerequisite   Topic  @relation("TopicPrereq", fields: [prerequisiteId], references: [id], onDelete: Cascade)
+
+  @@id([topicId, prerequisiteId])
+}
+
+model LearningOutcome {
+  id        String     @id @default(cuid())
+  topicId   String
+  code      String
+  statement String
+  topic     Topic      @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  questions Question[]
+
+  @@unique([topicId, code])
+}
+
+enum ContentStatus {
+  DRAFT
+  IN_REVIEW
+  PUBLISHED
+  REJECTED
+  ARCHIVED
+}
+
+enum ContentOrigin {
+  ORIGINAL // written by a PD FinPrep author
+  AI_GENERATED // must be human-reviewed before publishing
+  LICENSED
+}
+
+model Lesson {
+  id               String         @id @default(cuid())
+  topicId          String
+  slug             String
+  title            String
+  // Structured sections, validated by src/server/content/lesson-schema.ts
+  content          Json
+  estimatedMinutes Int            @default(30)
+  status           ContentStatus  @default(DRAFT)
+  origin           ContentOrigin  @default(ORIGINAL)
+  sourceId         String?
+  version          Int            @default(1)
+  reviewedById     String?
+  reviewedAt       DateTime?
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+  topic            Topic          @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  source           ContentSource? @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+  progress         LessonProgress[]
+  bookmarks        Bookmark[]
+  notes            Note[]
+  reports          ContentReport[]
+
+  @@unique([topicId, slug])
+}
+
+model Formula {
+  id                 String         @id @default(cuid())
+  slug               String         @unique
+  name               String
+  category           String // e.g. "Time value of money"
+  expression         String
+  variables          Json // [{symbol, meaning, unit}]
+  conventions        String?
+  assumptions        String
+  example            Json // {problem, steps[], answer}
+  mistakes           String[]
+  calculatorKey      String? // deterministic calculator in src/lib/finance
+  calculatorGuidance String?
+  appliesTo          String? // exams/jurisdictions the convention applies to
+  createdAt          DateTime       @default(now())
+  updatedAt          DateTime       @updatedAt
+  topics             FormulaTopic[]
+  questions          Question[]
+  bookmarks          Bookmark[]
+  notes              Note[]
+  reports            ContentReport[]
+}
+
+model FormulaTopic {
+  formulaId String
+  topicId   String
+  formula   Formula @relation(fields: [formulaId], references: [id], onDelete: Cascade)
+  topic     Topic   @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@id([formulaId, topicId])
+}
+
+// ---------------------------------------------------------------------------
+// Question bank
+// ---------------------------------------------------------------------------
+
+enum QuestionType {
+  MCQ
+  MULTI_SELECT
+  NUMERIC
+  WRITTEN
+}
+
+model ItemSet {
+  id                String          @id @default(cuid())
+  syllabusVersionId String
+  topicId           String
+  title             String
+  vignette          String
+  createdAt         DateTime        @default(now())
+  syllabus          SyllabusVersion @relation(fields: [syllabusVersionId], references: [id], onDelete: Cascade)
+  topic             Topic           @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  questions         Question[]
+}
+
+model Question {
+  id                String          @id @default(cuid())
+  externalKey       String?         @unique // stable key for imports/seeds
+  syllabusVersionId String
+  topicId           String
+  learningOutcomeId String?
+  itemSetId         String?
+  formulaId         String?
+  type              QuestionType
+  difficulty        Int // 1 easy, 2 medium, 3 hard
+  stem              String
+  // Type-specific payload validated by src/server/assessment/question-schema.ts:
+  //   MCQ/MULTI_SELECT: {options: [{id, text, correct, rationale}]}
+  //   NUMERIC: {answer, tolerance, toleranceType, unit, decimals}
+  //   WRITTEN: {rubric: [{criterion, points}], modelAnswer}
+  payload           Json
+  // Optional deterministic check: {fn, args}; the answer key must match the
+  // calculator output before the question can be published.
+  calcSpec          Json?
+  explanation       String
+  steps             String[]
+  conceptTested     String
+  commonMistake     String?
+  estimatedSeconds  Int             @default(90)
+  context           String? // jurisdiction / standard / tax year where answer depends on it
+  status            ContentStatus   @default(DRAFT)
+  origin            ContentOrigin   @default(ORIGINAL)
+  sourceId          String?
+  version           Int             @default(1)
+  reviewedById      String?
+  reviewedAt        DateTime?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  syllabus          SyllabusVersion @relation(fields: [syllabusVersionId], references: [id], onDelete: Cascade)
+  topic             Topic           @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  outcome           LearningOutcome? @relation(fields: [learningOutcomeId], references: [id], onDelete: SetNull)
+  itemSet           ItemSet?        @relation(fields: [itemSetId], references: [id], onDelete: SetNull)
+  formula           Formula?        @relation(fields: [formulaId], references: [id], onDelete: SetNull)
+  source            ContentSource?  @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+  versions          QuestionVersion[]
+  attemptItems      AttemptItem[]
+  bookmarks         Bookmark[]
+  reports           ContentReport[]
+  reviewStates      QuestionReviewState[]
+  flashcards        Flashcard[]
+
+  @@index([syllabusVersionId, topicId, status])
+}
+
+model QuestionVersion {
+  id          String   @id @default(cuid())
+  questionId  String
+  version     Int
+  snapshot    Json
+  reason      String?
+  changedById String?
+  createdAt   DateTime @default(now())
+  question    Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  changedBy   User?    @relation(fields: [changedById], references: [id], onDelete: SetNull)
+
+  @@unique([questionId, version])
+}
+
+// ---------------------------------------------------------------------------
+// Enrollment, plans, attempts, progress
+// ---------------------------------------------------------------------------
+
+model Enrollment {
+  id                  String          @id @default(cuid())
+  userId              String
+  programId           String
+  levelId             String
+  syllabusVersionId   String
+  targetExamDate      DateTime?
+  targetWindowLabel   String?
+  hoursPerDay         Float           @default(2)
+  studyDaysPerWeek    Int             @default(5)
+  preferredFormat     String          @default("mixed") // reading | practice | mixed | video
+  priorKnowledge      String          @default("none") // none | some | strong
+  confidentTopicIds   String[]
+  difficultTopicIds   String[]
+  accessTier          Tier            @default(FREE)
+  isPrimary           Boolean         @default(false)
+  status              String          @default("active") // active | archived
+  diagnosticAttemptId String?
+  onboardedAt         DateTime?
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+  user                User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  program             ExamProgram     @relation(fields: [programId], references: [id], onDelete: Restrict)
+  level               ExamLevel       @relation(fields: [levelId], references: [id], onDelete: Restrict)
+  syllabus            SyllabusVersion @relation(fields: [syllabusVersionId], references: [id], onDelete: Restrict)
+  plans               StudyPlan[]
+  attempts            Attempt[]
+  studyLogs           StudyLog[]
+  tutorSessions       TutorSession[]
+
+  @@unique([userId, levelId])
+  @@index([userId])
+}
+
+enum AttemptKind {
+  DIAGNOSTIC
+  PRACTICE
+  TOPIC_QUIZ
+  MOCK
+  REVISION
+  KNOWLEDGE_CHECK
+}
+
+enum AttemptMode {
+  UNTIMED
+  TIMED
+  EXAM_SIM // answers hidden until submission, no pause
+}
+
+enum AttemptStatus {
+  IN_PROGRESS
+  PAUSED
+  SUBMITTED
+}
+
+model Attempt {
+  id                String          @id @default(cuid())
+  userId            String
+  enrollmentId      String?
+  syllabusVersionId String
+  kind              AttemptKind
+  mode              AttemptMode
+  title             String
+  // {sections:[{name, seconds|null, itemCount}], topicIds, difficulty, mockType, scaledNote}
+  config            Json
+  status            AttemptStatus   @default(IN_PROGRESS)
+  timeLimitSeconds  Int?
+  elapsedSeconds    Int             @default(0) // accumulated active time before resumedAt
+  resumedAt         DateTime? // start of current active stretch; null while paused/submitted
+  currentSection    Int             @default(0)
+  sectionElapsed    Int             @default(0)
+  startedAt         DateTime        @default(now())
+  submittedAt       DateTime?
+  autoSubmitted     Boolean         @default(false)
+  correctCount      Int?
+  totalCount        Int?
+  scorePct          Float?
+  summary           Json?
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
+  user              User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  enrollment        Enrollment?     @relation(fields: [enrollmentId], references: [id], onDelete: SetNull)
+  syllabus          SyllabusVersion @relation(fields: [syllabusVersionId], references: [id], onDelete: Restrict)
+  items             AttemptItem[]
+
+  @@index([userId, kind, status])
+  @@index([enrollmentId])
+}
+
+model AttemptItem {
+  id               String    @id @default(cuid())
+  attemptId        String
+  questionId       String
+  questionVersion  Int
+  position         Int
+  section          Int       @default(0)
+  response         Json? // {selected:[ids]} | {value:number} | {text}
+  isCorrect        Boolean?
+  score            Float?
+  flagged          Boolean   @default(false)
+  timeSpentSeconds Int       @default(0)
+  confidence       Int? // 1 guess, 2 unsure, 3 confident
+  errorCategory    String? // conceptual | calculation | misread | time_pressure | careless
+  answeredAt       DateTime?
+  attempt          Attempt   @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question         Question  @relation(fields: [questionId], references: [id], onDelete: Restrict)
+
+  // No duplicate questions within one assessment.
+  @@unique([attemptId, questionId])
+  @@index([questionId])
+}
+
+enum Mastery {
+  NOT_STARTED
+  INSUFFICIENT_EVIDENCE
+  NEEDS_WORK
+  DEVELOPING
+  PROFICIENT
+  MASTERED
+}
+
+model TopicProficiency {
+  id              String    @id @default(cuid())
+  userId          String
+  topicId         String
+  estimate        Float     @default(0.5) // heuristic 0..1, see src/server/adaptive/proficiency.ts
+  attempts        Int       @default(0)
+  correct         Int       @default(0)
+  recentAccuracy  Float?
+  avgTimeRatio    Float? // time taken / estimated time
+  sessions        Int       @default(0)
+  delayedAccuracy Float? // accuracy on items answered >= 7 days after first exposure
+  mastery         Mastery   @default(NOT_STARTED)
+  lastPracticedAt DateTime?
+  updatedAt       DateTime  @updatedAt
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topic           Topic     @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, topicId])
+}
+
+model LessonProgress {
+  id          String    @id @default(cuid())
+  userId      String
+  lessonId    String
+  status      String    @default("in_progress") // in_progress | completed
+  startedAt   DateTime  @default(now())
+  completedAt DateTime?
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson      Lesson    @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, lessonId])
+}
+
+model StudyPlan {
+  id          String      @id @default(cuid())
+  enrollmentId String
+  startDate   DateTime
+  examDate    DateTime
+  weeklyHours Float
+  status      String      @default("active") // active | superseded
+  warnings    Json?
+  summary     Json?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  enrollment  Enrollment  @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  tasks       StudyTask[]
+
+  @@index([enrollmentId, status])
+}
+
+enum TaskKind {
+  LEARN
+  PRACTICE
+  REVISION
+  MOCK
+  REVIEW_MOCK
+}
+
+enum TaskStatus {
+  PENDING
+  DONE
+  SKIPPED
+}
+
+model StudyTask {
+  id               String     @id @default(cuid())
+  planId           String
+  topicId          String?
+  date             DateTime   @db.Date
+  order            Int
+  kind             TaskKind
+  title            String
+  objective        String
+  activity         String
+  estimatedMinutes Int
+  practiceTarget   Int        @default(0)
+  revisionDate     DateTime?  @db.Date
+  status           TaskStatus @default(PENDING)
+  completedAt      DateTime?
+  rescheduledFrom  DateTime?  @db.Date
+  plan             StudyPlan  @relation(fields: [planId], references: [id], onDelete: Cascade)
+  topic            Topic?     @relation(fields: [topicId], references: [id], onDelete: SetNull)
+  logs             StudyLog[]
+
+  @@index([planId, date])
+}
+
+model StudyLog {
+  id           String      @id @default(cuid())
+  userId       String
+  enrollmentId String?
+  taskId       String?
+  date         DateTime    @db.Date
+  minutes      Int
+  activity     String // lesson | practice | flashcards | mock | tutor | other
+  note         String?
+  createdAt    DateTime    @default(now())
+  user         User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  enrollment   Enrollment? @relation(fields: [enrollmentId], references: [id], onDelete: SetNull)
+  task         StudyTask?  @relation(fields: [taskId], references: [id], onDelete: SetNull)
+
+  @@index([userId, date])
+}
+
+// ---------------------------------------------------------------------------
+// Revision: flashcards, spaced repetition, bookmarks, notes
+// ---------------------------------------------------------------------------
+
+enum FlashcardKind {
+  USER
+  SYSTEM
+  FORMULA
+  DEFINITION
+  MISTAKE
+}
+
+model Flashcard {
+  id               String        @id @default(cuid())
+  ownerId          String? // null = system card visible to everyone
+  topicId          String?
+  sourceQuestionId String?
+  kind             FlashcardKind
+  front            String
+  back             String
+  origin           ContentOrigin @default(ORIGINAL)
+  verified         Boolean       @default(true) // AI-suggested cards start unverified
+  createdAt        DateTime      @default(now())
+  owner            User?         @relation("FlashcardOwner", fields: [ownerId], references: [id], onDelete: Cascade)
+  topic            Topic?        @relation(fields: [topicId], references: [id], onDelete: SetNull)
+  sourceQuestion   Question?     @relation(fields: [sourceQuestionId], references: [id], onDelete: SetNull)
+  states           CardState[]
+  logs             ReviewLog[]
+
+  @@index([ownerId])
+  @@index([topicId])
+}
+
+model CardState {
+  id             String    @id @default(cuid())
+  userId         String
+  flashcardId    String
+  easeFactor     Float     @default(2.5)
+  intervalDays   Float     @default(0)
+  repetitions    Int       @default(0)
+  lapses         Int       @default(0)
+  dueAt          DateTime
+  lastReviewedAt DateTime?
+  suspended      Boolean   @default(false)
+  user           User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  flashcard      Flashcard @relation(fields: [flashcardId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, flashcardId])
+  @@index([userId, dueAt])
+}
+
+model ReviewLog {
+  id           String    @id @default(cuid())
+  userId       String
+  flashcardId  String
+  rating       Int // 1 again, 2 hard, 3 good, 4 easy
+  prevInterval Float
+  newInterval  Float
+  reviewedAt   DateTime  @default(now())
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  flashcard    Flashcard @relation(fields: [flashcardId], references: [id], onDelete: Cascade)
+
+  @@index([userId, reviewedAt])
+}
+
+model QuestionReviewState {
+  id           String   @id @default(cuid())
+  userId       String
+  questionId   String
+  easeFactor   Float    @default(2.5)
+  intervalDays Float    @default(0)
+  repetitions  Int      @default(0)
+  lapses       Int      @default(0)
+  dueAt        DateTime
+  lastResult   Boolean?
+  updatedAt    DateTime @updatedAt
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  question     Question @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, questionId])
+  @@index([userId, dueAt])
+}
+
+model Bookmark {
+  id         String    @id @default(cuid())
+  userId     String
+  lessonId   String?
+  formulaId  String?
+  questionId String?
+  label      String?
+  createdAt  DateTime  @default(now())
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lesson     Lesson?   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  formula    Formula?  @relation(fields: [formulaId], references: [id], onDelete: Cascade)
+  question   Question? @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, lessonId, formulaId, questionId])
+  @@index([userId])
+}
+
+model Note {
+  id        String   @id @default(cuid())
+  userId    String
+  topicId   String?
+  lessonId  String?
+  formulaId String?
+  title     String
+  body      String
+  highlight Boolean  @default(false) // pinned to the revision notebook
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  topic     Topic?   @relation(fields: [topicId], references: [id], onDelete: SetNull)
+  lesson    Lesson?  @relation(fields: [lessonId], references: [id], onDelete: SetNull)
+  formula   Formula? @relation(fields: [formulaId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+}
+
+// ---------------------------------------------------------------------------
+// AI tutor
+// ---------------------------------------------------------------------------
+
+enum TutorMode {
+  TEACH
+  TEST_THINKING
+  FIND_MISTAKE
+}
+
+model TutorSession {
+  id           String         @id @default(cuid())
+  userId       String
+  enrollmentId String?
+  topicId      String?
+  mode         TutorMode
+  title        String
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+  user         User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  enrollment   Enrollment?    @relation(fields: [enrollmentId], references: [id], onDelete: SetNull)
+  topic        Topic?         @relation(fields: [topicId], references: [id], onDelete: SetNull)
+  messages     TutorMessage[]
+
+  @@index([userId])
+}
+
+model TutorMessage {
+  id        String       @id @default(cuid())
+  sessionId String
+  role      String // user | assistant
+  content   String
+  citations Json? // [{type, id, title, href}]
+  provider  String?
+  createdAt DateTime     @default(now())
+  session   TutorSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@index([sessionId, createdAt])
+}
+
+// ---------------------------------------------------------------------------
+// Feedback, notifications, gamification, community, past papers
+// ---------------------------------------------------------------------------
+
+model ContentReport {
+  id           String    @id @default(cuid())
+  userId       String?
+  questionId   String?
+  lessonId     String?
+  formulaId    String?
+  category     String // wrong_answer | unclear | typo | outdated | other
+  message      String
+  status       String    @default("open") // open | resolved | rejected
+  resolution   String?
+  resolvedById String?
+  resolvedAt   DateTime?
+  createdAt    DateTime  @default(now())
+  user         User?     @relation("ReportAuthor", fields: [userId], references: [id], onDelete: SetNull)
+  resolvedBy   User?     @relation("ReportResolver", fields: [resolvedById], references: [id], onDelete: SetNull)
+  question     Question? @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  lesson       Lesson?   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  formula      Formula?  @relation(fields: [formulaId], references: [id], onDelete: Cascade)
+
+  @@index([status])
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  type      String
+  title     String
+  body      String
+  link      String?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+}
+
+model Achievement {
+  id       String   @id @default(cuid())
+  userId   String
+  key      String
+  earnedAt DateTime @default(now())
+  meta     Json?
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, key])
+}
+
+model StudyGroup {
+  id         String             @id @default(cuid())
+  name       String
+  ownerId    String
+  inviteCode String             @unique
+  createdAt  DateTime           @default(now())
+  owner      User               @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  members    StudyGroupMember[]
+}
+
+model StudyGroupMember {
+  groupId      String
+  userId       String
+  shareProgress Boolean    @default(true)
+  joinedAt     DateTime   @default(now())
+  group        StudyGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@id([groupId, userId])
+}
+
+enum PastPaperKind {
+  OFFICIAL_PAST_PAPER // published by the awarding body; we link, never re-host
+  OFFICIAL_SAMPLE // official specimen / sample questions
+  LICENSED // re-hosted under licence
+  ORIGINAL_MOCK // PD FinPrep original paper written in the exam style
+}
+
+model PastPaper {
+  id                  String             @id @default(cuid())
+  programId           String
+  levelId             String?
+  title               String
+  year                Int?
+  sessionLabel        String?
+  kind                PastPaperKind
+  url                 String?
+  hasSuggestedAnswers Boolean            @default(false)
+  sourceId            String?
+  licenseNote         String
+  verificationStatus  VerificationStatus @default(UNVERIFIED)
+  verifiedAt          DateTime?
+  createdAt           DateTime           @default(now())
+  program             ExamProgram        @relation(fields: [programId], references: [id], onDelete: Cascade)
+  level               ExamLevel?         @relation(fields: [levelId], references: [id], onDelete: SetNull)
+  source              ContentSource?     @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+
+  @@index([programId])
+}
