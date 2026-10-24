@@ -51,21 +51,35 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
   return (
     <>
-      <PageHeader
-        title={`Welcome back, ${user.name.split(" ")[0]}`}
-        description={
-          <>
-            {enrollment.program.shortName} {enrollment.level.name}
-            {enrollment.targetExamDate ? ` · exam ${fmtDate(enrollment.targetExamDate)} (${daysLeft} days)` : " · no exam date set"}
-          </>
-        }
-        actions={
-          <>
-            <LinkButton href="/plan" variant="secondary">Full plan</LinkButton>
-            <StartAttemptButton fields={{ syllabusVersionId: sv, enrollmentId: enrollment.id, kind: "PRACTICE", count: 10 }} size="md">Quick practice (10 Q)</StartAttemptButton>
-          </>
-        }
-      />
+      <section className="bg-gradient-navy animate-fade-up relative mb-6 overflow-hidden rounded-3xl p-6 text-white shadow-xl shadow-navy-900/20 sm:p-8">
+        <div className="aurora" aria-hidden />
+        <div className="bg-grid-dark absolute inset-0" aria-hidden />
+        <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p className="text-sm font-medium text-gold-300">{enrollment.program.shortName} · {enrollment.level.name}</p>
+            <h1 className="mt-1 text-3xl font-bold tracking-tight sm:text-4xl">Welcome back, <span className="text-gradient-gold">{user.name.split(" ")[0]}</span></h1>
+            <p className="mt-2 max-w-xl text-sm text-navy-100">Readiness: <strong className="text-white">{analytics.readiness.label}</strong> — {analytics.readiness.description}</p>
+            <div className="mt-5 flex flex-wrap gap-2">
+              <StartAttemptButton fields={{ syllabusVersionId: sv, enrollmentId: enrollment.id, kind: "PRACTICE", count: 10 }} variant="gold" size="md">Quick practice (10 Q)</StartAttemptButton>
+              <LinkButton href="/plan" variant="secondary">Full plan</LinkButton>
+            </div>
+          </div>
+          <div className="grid grid-cols-3 gap-3 text-center">
+            <div className="glass-dark rounded-2xl px-4 py-3">
+              <p className="text-3xl font-black text-gold-300">{daysLeft ?? "—"}</p>
+              <p className="text-[11px] uppercase tracking-wider text-navy-200">days to exam</p>
+            </div>
+            <div className="glass-dark rounded-2xl px-4 py-3">
+              <p className="text-3xl font-black text-white">{Math.round((analytics.overall.coverage ?? 0) * 100)}%</p>
+              <p className="text-[11px] uppercase tracking-wider text-navy-200">coverage</p>
+            </div>
+            <div className="glass-dark rounded-2xl px-4 py-3">
+              <p className="text-3xl font-black text-white">{user.gamificationEnabled ? streak : todayTasks.length}</p>
+              <p className="text-[11px] uppercase tracking-wider text-navy-200">{user.gamificationEnabled ? "day streak" : "tasks today"}</p>
+            </div>
+          </div>
+        </div>
+      </section>
       {sp.denied && <Alert tone="error" className="mb-4">You do not have permission to open that page.</Alert>}
       {sp.welcome && <Alert tone="success" className="mb-4" title="Your plan is ready">Start with today&apos;s tasks below. Estimates will sharpen as you practise.</Alert>}
       {!enrollment.diagnosticAttemptId && (

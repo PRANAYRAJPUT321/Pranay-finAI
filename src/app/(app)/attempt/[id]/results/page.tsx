@@ -5,6 +5,7 @@ import { FeedbackPanel, type FeedbackData } from "@/components/attempt/feedback"
 import { ErrorCategorySelect } from "@/components/attempt/error-category";
 import { StartAttemptButton } from "@/components/start-attempt";
 import { MockTrend } from "@/components/charts";
+import { Confetti } from "@/components/motion";
 import { requireUser } from "@/server/auth/current";
 import { AttemptError, getAttemptView, listAttempts } from "@/server/assessment/service";
 import { ERROR_CATEGORIES } from "@/server/assessment/summary";
@@ -45,6 +46,7 @@ export default async function ResultsPage({ params }: { params: Promise<{ id: st
           </>
         }
       />
+      {s.scorePct >= 75 && s.total >= 5 && <Confetti />}
       {view.kind === "DIAGNOSTIC" && (
         <Alert tone="info" className="mb-4" title="Preliminary estimate">
           A diagnostic is a small sample. Treat these results as a starting point; your topic estimates will update as you practise. Your study plan has been rebuilt using these results.

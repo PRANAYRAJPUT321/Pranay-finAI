@@ -61,3 +61,87 @@ body {
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
 }
+
+/* ------------------------------------------------------------------------ */
+/* Motion & surface design layer                                             */
+/* ------------------------------------------------------------------------ */
+
+@keyframes fade-up { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes aurora-drift {
+  0% { transform: translate3d(-6%, -4%, 0) rotate(0deg) scale(1); }
+  50% { transform: translate3d(6%, 4%, 0) rotate(12deg) scale(1.08); }
+  100% { transform: translate3d(-6%, -4%, 0) rotate(0deg) scale(1); }
+}
+@keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+@keyframes shine { from { transform: translateX(-120%) skewX(-20deg); } to { transform: translateX(220%) skewX(-20deg); } }
+@keyframes grow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes marquee { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+@keyframes pulse-ring { 0% { box-shadow: 0 0 0 0 rgb(201 162 39 / 0.45); } 100% { box-shadow: 0 0 0 14px rgb(201 162 39 / 0); } }
+@keyframes gradient-pan { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+@keyframes confetti-fall { 0% { transform: translateY(-20vh) rotate(0); opacity: 1; } 100% { transform: translateY(110vh) rotate(720deg); opacity: 0; } }
+@keyframes shimmer { from { background-position: -400px 0; } to { background-position: 400px 0; } }
+
+.animate-fade-up { animation: fade-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) both; animation-delay: var(--delay, 0ms); }
+.animate-fade-in { animation: fade-in 0.5s ease both; }
+.float { animation: float 6s ease-in-out infinite; }
+.pulse-ring { animation: pulse-ring 2.2s ease-out infinite; }
+
+/* Scroll reveal (toggled by <Reveal>) */
+.reveal { opacity: 0; transform: translateY(18px); transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1), transform 0.7s cubic-bezier(0.22, 1, 0.36, 1); transition-delay: var(--delay, 0ms); }
+.reveal.is-visible { opacity: 1; transform: none; }
+
+/* Animated aurora backdrop */
+.aurora { position: absolute; inset: 0; overflow: hidden; pointer-events: none; z-index: 0; }
+.aurora::before, .aurora::after {
+  content: ""; position: absolute; width: 60vmax; height: 60vmax; border-radius: 9999px; filter: blur(80px); opacity: 0.55;
+  animation: aurora-drift 18s ease-in-out infinite;
+}
+.aurora::before { top: -30vmax; left: -15vmax; background: radial-gradient(circle, #2c4a7c 0%, transparent 65%); }
+.aurora::after { bottom: -35vmax; right: -20vmax; background: radial-gradient(circle, #c9a227 0%, transparent 60%); opacity: 0.35; animation-duration: 24s; animation-direction: reverse; }
+.aurora-light::before { background: radial-gradient(circle, #c3d0e6 0%, transparent 65%); opacity: 0.6; }
+.aurora-light::after { background: radial-gradient(circle, #f5ecc9 0%, transparent 60%); opacity: 0.7; }
+
+/* Subtle grid texture */
+.bg-grid {
+  background-image: linear-gradient(to right, rgb(11 31 58 / 0.05) 1px, transparent 1px), linear-gradient(to bottom, rgb(11 31 58 / 0.05) 1px, transparent 1px);
+  background-size: 32px 32px;
+}
+.bg-grid-dark {
+  background-image: linear-gradient(to right, rgb(255 255 255 / 0.05) 1px, transparent 1px), linear-gradient(to bottom, rgb(255 255 255 / 0.05) 1px, transparent 1px);
+  background-size: 40px 40px;
+  mask-image: radial-gradient(ellipse at center, black 30%, transparent 75%);
+}
+
+/* Surfaces */
+.glass-card { border-radius: 1.25rem; background: rgb(255 255 255 / 0.95); border: 1px solid rgb(255 255 255 / 0.6); box-shadow: 0 10px 40px -12px rgb(11 31 58 / 0.25); backdrop-filter: blur(14px); }
+.glass-dark { background: rgb(15 34 64 / 0.55); border: 1px solid rgb(255 255 255 / 0.1); backdrop-filter: blur(14px); }
+.card-hover { transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s ease, border-color 0.25s ease; }
+.card-hover:hover { transform: translateY(-3px); box-shadow: 0 18px 40px -18px rgb(11 31 58 / 0.35); border-color: rgb(201 162 39 / 0.45); }
+.glow-gold { box-shadow: 0 0 0 1px rgb(201 162 39 / 0.35), 0 12px 40px -10px rgb(201 162 39 / 0.45); }
+
+/* Gradient text & fills */
+.text-gradient-gold { background: linear-gradient(90deg, #f5ecc9, #d4ad36 40%, #f5ecc9 80%); background-size: 200% auto; -webkit-background-clip: text; background-clip: text; color: transparent; animation: gradient-pan 6s ease infinite; }
+.text-gradient-navy { background: linear-gradient(90deg, #0b1f3a, #2c4a7c 60%, #a7821c); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.bg-gradient-navy { background: linear-gradient(135deg, #071428 0%, #15294c 55%, #1f3863 100%); }
+.bg-gradient-gold { background: linear-gradient(135deg, #e0c25b 0%, #c9a227 50%, #a7821c 100%); }
+.bar-fill { transform-origin: left; animation: grow 0.9s cubic-bezier(0.22, 1, 0.36, 1) both; }
+
+/* Buttons with a moving sheen */
+.btn-shine { position: relative; overflow: hidden; isolation: isolate; }
+.btn-shine::after { content: ""; position: absolute; inset: 0; width: 40%; background: linear-gradient(90deg, transparent, rgb(255 255 255 / 0.35), transparent); transform: translateX(-120%) skewX(-20deg); z-index: -1; }
+.btn-shine:hover::after { animation: shine 0.9s ease; }
+
+/* Marquee */
+.marquee { display: flex; width: max-content; animation: marquee 40s linear infinite; }
+.marquee:hover { animation-play-state: paused; }
+
+/* Skeleton shimmer */
+.skeleton { background: linear-gradient(90deg, #eef2f7 25%, #f8fafc 37%, #eef2f7 63%); background-size: 800px 100%; animation: shimmer 1.4s linear infinite; border-radius: 0.5rem; }
+
+/* Confetti pieces */
+.confetti-piece { position: fixed; top: 0; width: 8px; height: 14px; border-radius: 2px; z-index: 60; pointer-events: none; animation: confetti-fall var(--dur, 2.8s) cubic-bezier(0.2, 0.6, 0.4, 1) forwards; animation-delay: var(--delay, 0ms); }
+
+/* Elegant scrollbars */
+* { scrollbar-width: thin; scrollbar-color: #94abd0 transparent; }
+::selection { background: #f5ecc9; color: #071428; }

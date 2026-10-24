@@ -120,7 +120,7 @@ async function seedFormulas() {
   }
 }
 
-async function seedCurriculum(c: CurriculumSeed, sourceId: string, reviewerId: string) {
+async function seedCurriculum(c: CurriculumSeed, sourceId: string, reviewerId: string | null) {
   const sv = await prisma.syllabusVersion.findFirstOrThrow({ where: { status: "CURRENT", level: { code: c.levelCode, program: { slug: c.programSlug } } } });
   const topics = await prisma.topic.findMany({ where: { syllabusVersionId: sv.id }, include: { outcomes: true } });
   const topicId = (code: string) => {
@@ -221,23 +221,31 @@ async function seedPastPapers() {
   }
 }
 
+/**
+ * Accounts. Development: an admin plus demo editor/student accounts with
+ * documented passwords. Production (Vercel or NODE_ENV=production): nothing
+ * with a known password is ever created — the admin is created only when
+ * SEED_ADMIN_EMAIL and a strong SEED_ADMIN_PASSWORD are provided, and demo
+ * accounts only when SEED_DEMO_USERS=true.
+ */
 async function seedUsers() {
+  const production = process.env.NODE_ENV === "production" || !!process.env.VERCEL;
   const adminEmail = (process.env.SEED_ADMIN_EMAIL ?? "admin@finprep.local").toLowerCase();
-  const adminPassword = process.env.SEED_ADMIN_PASSWORD ?? "ChangeMe!Admin123";
-  const users = [
-    { email: adminEmail, name: "PD FinPrep Admin", role: "ADMIN" as const, password: adminPassword },
-    { email: "editor@finprep.local", name: "Content Editor (demo)", role: "CONTENT_MANAGER" as const, password: "ChangeMe!Editor123" },
-    { email: "student@finprep.local", name: "Demo Student", role: "STUDENT" as const, password: "ChangeMe!Student123" },
-  ];
-  const created = [];
-  for (const u of users) {
-    const existing = await prisma.user.findUnique({ where: { email: u.email } });
-    created.push(
-      existing ??
-        (await prisma.user.create({ data: { email: u.email, name: u.name, role: u.role, passwordHash: await bcrypt.hash(u.password, 12), emailVerifiedAt: new Date() } })),
+  const adminPassword = process.env.SEED_ADMIN_PASSWORD ?? (production ? "" : "ChangeMe!Admin123");
+  const users: { email: string; name: string; role: "ADMIN" | "CONTENT_MANAGER" | "STUDENT"; password: string }[] = [];
+  if (adminPassword.length >= 12) users.push({ email: adminEmail, name: "PD FinPrep Admin", role: "ADMIN", password: adminPassword });
+  else if (production) console.warn("[seed] SEED_ADMIN_PASSWORD not set (or shorter than 12 characters): no admin account created.");
+  if (!production || process.env.SEED_DEMO_USERS === "true") {
+    users.push(
+      { email: "editor@finprep.local", name: "Content Editor (demo)", role: "CONTENT_MANAGER", password: "ChangeMe!Editor123" },
+      { email: "student@finprep.local", name: "Demo Student", role: "STUDENT", password: "ChangeMe!Student123" },
     );
   }
-  return created[0];
+  for (const u of users) {
+    const existing = await prisma.user.findUnique({ where: { email: u.email } });
+    if (!existing) await prisma.user.create({ data: { email: u.email, name: u.name, role: u.role, passwordHash: await bcrypt.hash(u.password, 12), emailVerifiedAt: new Date() } });
+  }
+  return prisma.user.findFirst({ where: { role: "ADMIN" }, orderBy: { createdAt: "asc" } });
 }
 
 async function main() {
@@ -246,10 +254,10 @@ async function main() {
   const admin = await seedUsers();
   await seedFormulas();
   let questions = 0;
-  for (const c of [cfaL1, frmP1, cpaFar, nismVA]) questions += await seedCurriculum(c, source.id, admin.id);
+  for (const c of [cfaL1, frmP1, cpaFar, nismVA]) questions += await seedCurriculum(c, source.id, admin?.id ?? null);
   await seedPastPapers();
   console.log(`Seed complete: ${programs.length} programs, ${formulas.length} formulas, ${questions} questions (all answer keys verified).`);
-  console.log("Demo accounts (development only): admin from SEED_ADMIN_EMAIL, editor@finprep.local, student@finprep.local — see README.");
+  console.log(admin ? `Admin account: ${admin.email}` : "No admin account (set SEED_ADMIN_EMAIL and SEED_ADMIN_PASSWORD to create one).");
 }
 
 main()

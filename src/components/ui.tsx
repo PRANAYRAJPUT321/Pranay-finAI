@@ -1,35 +1,36 @@
 import Link from "next/link";
 import clsx from "clsx";
 import type { ComponentProps, ReactNode } from "react";
+import { CountUp } from "./motion";
 
 export { clsx as cx };
 
 type Variant = "primary" | "secondary" | "ghost" | "danger" | "gold";
 const variants: Record<Variant, string> = {
-  primary: "bg-navy-900 text-white hover:bg-navy-800 disabled:bg-navy-300",
-  secondary: "bg-white text-navy-900 border border-navy-200 hover:bg-navy-50 disabled:text-navy-300",
+  primary: "btn-shine bg-gradient-to-br from-navy-800 to-navy-950 text-white shadow-md shadow-navy-900/20 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-navy-900/30 disabled:from-navy-300 disabled:to-navy-300 disabled:shadow-none disabled:translate-y-0",
+  secondary: "bg-white/90 text-navy-900 border border-navy-200 shadow-sm hover:-translate-y-0.5 hover:border-gold-400 hover:shadow-md disabled:text-navy-300 disabled:translate-y-0",
   ghost: "text-navy-700 hover:bg-navy-50",
-  danger: "bg-red-700 text-white hover:bg-red-800 disabled:bg-red-300",
-  gold: "bg-gold-500 text-navy-950 hover:bg-gold-400 disabled:bg-gold-200",
+  danger: "btn-shine bg-red-700 text-white hover:bg-red-800 disabled:bg-red-300",
+  gold: "btn-shine bg-gradient-to-br from-gold-300 via-gold-500 to-gold-600 text-navy-950 shadow-md shadow-gold-500/30 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-gold-500/40 disabled:from-gold-200 disabled:to-gold-200 disabled:translate-y-0",
 };
 const sizes = { sm: "px-2.5 py-1.5 text-sm", md: "px-4 py-2 text-sm", lg: "px-5 py-2.5 text-base" };
 
 export function Button({ variant = "primary", size = "md", className, ...props }: ComponentProps<"button"> & { variant?: Variant; size?: keyof typeof sizes }) {
   return (
     <button
-      className={clsx("inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors disabled:cursor-not-allowed", variants[variant], sizes[size], className)}
+      className={clsx("inline-flex items-center justify-center gap-2 rounded-xl font-medium transition-all duration-200 active:translate-y-0 active:scale-[0.98] disabled:cursor-not-allowed", variants[variant], sizes[size], className)}
       {...props}
     />
   );
 }
 
 export function LinkButton({ variant = "primary", size = "md", className, ...props }: ComponentProps<typeof Link> & { variant?: Variant; size?: keyof typeof sizes }) {
-  return <Link className={clsx("inline-flex items-center justify-center gap-2 rounded-lg font-medium transition-colors", variants[variant], sizes[size], className)} {...props} />;
+  return <Link className={clsx("inline-flex items-center justify-center gap-2 rounded-xl font-medium transition-all duration-200 active:scale-[0.98]", variants[variant], sizes[size], className)} {...props} />;
 }
 
 export function Card({ className, children, ...props }: ComponentProps<"section">) {
   return (
-    <section className={clsx("rounded-xl border border-slate-200 bg-white p-5 shadow-sm", className)} {...props}>
+    <section className={clsx("card-hover rounded-2xl border border-slate-200/80 bg-white/90 p-5 shadow-sm shadow-navy-900/5 backdrop-blur-sm", className)} {...props}>
       {children}
     </section>
   );
@@ -38,7 +39,7 @@ export function Card({ className, children, ...props }: ComponentProps<"section"
 export function CardTitle({ children, action, className }: { children: ReactNode; action?: ReactNode; className?: string }) {
   return (
     <div className={clsx("mb-3 flex items-start justify-between gap-3", className)}>
-      <h2 className="text-base font-semibold text-navy-900">{children}</h2>
+      <h2 className="flex items-center gap-2 text-base font-semibold text-navy-900"><span aria-hidden className="h-4 w-1 rounded-full bg-gradient-to-b from-gold-400 to-gold-600" />{children}</h2>
       {action}
     </div>
   );
@@ -65,9 +66,9 @@ export function Badge({ tone = "slate", children, className, title }: { tone?: T
 
 export function PageHeader({ title, description, actions }: { title: string; description?: ReactNode; actions?: ReactNode }) {
   return (
-    <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+    <div className="animate-fade-up mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-navy-900">{title}</h1>
+        <h1 className="text-gradient-navy text-2xl font-bold tracking-tight sm:text-3xl">{title}</h1>
         {description && <p className="mt-1 max-w-3xl text-sm text-slate-600">{description}</p>}
       </div>
       {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
@@ -129,17 +130,18 @@ export function Alert({ tone = "info", title, children, className }: { tone?: "i
 
 export function Progress({ value, label, tone = "navy" }: { value: number; label?: string; tone?: "navy" | "gold" | "green" }) {
   const pct = Math.max(0, Math.min(100, value));
-  const bar = tone === "gold" ? "bg-gold-500" : tone === "green" ? "bg-emerald-600" : "bg-navy-700";
+  const bar = tone === "gold" ? "from-gold-300 to-gold-600" : tone === "green" ? "from-emerald-400 to-emerald-700" : "from-navy-500 to-navy-900";
   return (
-    <div role="progressbar" aria-valuenow={Math.round(pct)} aria-valuemin={0} aria-valuemax={100} aria-label={label} className="h-2 w-full overflow-hidden rounded-full bg-slate-200">
-      <div className={clsx("h-full rounded-full", bar)} style={{ width: `${pct}%` }} />
+    <div role="progressbar" aria-valuenow={Math.round(pct)} aria-valuemin={0} aria-valuemax={100} aria-label={label} className="h-2 w-full overflow-hidden rounded-full bg-slate-200/80">
+      <div className={clsx("bar-fill h-full rounded-full bg-gradient-to-r", bar)} style={{ width: `${pct}%` }} />
     </div>
   );
 }
 
 export function EmptyState({ title, description, action }: { title: string; description?: ReactNode; action?: ReactNode }) {
   return (
-    <div className="rounded-xl border border-dashed border-slate-300 bg-white px-6 py-10 text-center">
+    <div className="animate-fade-up relative overflow-hidden rounded-2xl border border-dashed border-navy-200 bg-white/80 px-6 py-12 text-center">
+      <div aria-hidden className="mx-auto mb-4 grid h-14 w-14 place-items-center rounded-2xl bg-gradient-to-br from-gold-100 to-gold-300 text-2xl shadow-inner">✦</div>
       <p className="font-medium text-navy-900">{title}</p>
       {description && <p className="mx-auto mt-1 max-w-md text-sm text-slate-600">{description}</p>}
       {action && <div className="mt-4 flex justify-center">{action}</div>}
@@ -147,11 +149,23 @@ export function EmptyState({ title, description, action }: { title: string; desc
   );
 }
 
+/** Animates simple numeric strings such as "42", "63%" or "12.5 h" with a count-up. */
+function animatedValue(value: ReactNode): ReactNode {
+  if (typeof value === "number") return <CountUp value={value} />;
+  if (typeof value === "string") {
+    const m = value.match(/^(\d+(?:\.(\d+))?)(%|\s?h)?$/);
+    if (m) return <CountUp value={Number(m[1])} decimals={m[2]?.length ?? 0} suffix={m[3] ?? ""} />;
+  }
+  return value;
+}
+
 export function Stat({ label, value, hint }: { label: string; value: ReactNode; hint?: ReactNode }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-      <p className="text-xs font-medium uppercase tracking-wide text-slate-500">{label}</p>
-      <p className="mt-1 text-2xl font-semibold text-navy-900">{value}</p>
+    <div className="card-hover animate-fade-up group relative overflow-hidden rounded-2xl border border-slate-200/80 bg-white/90 p-4 shadow-sm shadow-navy-900/5">
+      <span aria-hidden className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-navy-700 via-gold-500 to-navy-700 opacity-80" />
+      <span aria-hidden className="absolute -right-8 -top-8 h-24 w-24 rounded-full bg-gold-200/30 blur-2xl transition-opacity group-hover:opacity-100" />
+      <p className="text-xs font-semibold uppercase tracking-wider text-slate-500">{label}</p>
+      <p className="mt-1 text-2xl font-bold text-navy-900">{animatedValue(value)}</p>
       {hint && <p className="mt-1 text-xs text-slate-500">{hint}</p>}
     </div>
   );

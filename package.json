@@ -2,7 +2,7 @@
   "name": "pd-finprep",
   "version": "0.1.0",
   "private": true,
-  "description": "PD FinPrep — AI-assisted finance certification preparation platform",
+  "description": "PD FinPrep \u2014 AI-assisted finance certification preparation platform",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
@@ -17,7 +17,8 @@
     "db:deploy": "prisma migrate deploy",
     "db:seed": "prisma db seed",
     "db:reset": "prisma migrate reset --force",
-    "postinstall": "prisma generate"
+    "postinstall": "prisma generate",
+    "vercel-build": "node scripts/vercel-build.mjs"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
