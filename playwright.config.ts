@@ -5,6 +5,7 @@ const DATABASE_URL = process.env.TEST_DATABASE_URL ?? "postgresql://finprep:finp
 
 export default defineConfig({
   testDir: "tests/e2e",
+  globalSetup: "./tests/e2e/global-setup.ts",
   timeout: 120_000,
   expect: { timeout: 15_000 },
   fullyParallel: false,

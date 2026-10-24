@@ -25,6 +25,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     return (
       <>
         <PageHeader title={`Welcome, ${user.name.split(" ")[0]}`} />
+        {sp.denied && <Alert tone="error" className="mb-4">You do not have permission to open that page.</Alert>}
         <EmptyState title="Choose your first certification" description="Tell us which exam you are preparing for and how much time you have. We will set up a diagnostic and a personalised plan." action={<LinkButton href="/onboarding">Get started</LinkButton>} />
       </>
     );

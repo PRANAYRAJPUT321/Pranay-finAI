@@ -44,11 +44,11 @@ test("a student can complete the core preparation journey and resume later", asy
   await page.getByLabel("Number of questions").fill("2");
   await page.getByRole("button", { name: "Start practice" }).click();
   await page.waitForURL("**/attempt/**");
-  const radio = page.locator("article input[type=radio]");
-  if (await radio.count()) await radio.first().check();
-  else await page.locator("article input[type=number], article textarea, article input[type=checkbox]").first().fill?.("1").catch(() => undefined);
-  if (await page.locator("article input[type=checkbox]").count()) await page.locator("article input[type=checkbox]").first().check();
-  if (await page.locator("article input[type=number]").count()) await page.locator("article input[type=number]").fill("1");
+  await expect(page.getByText(/Question 1 of 2/)).toBeVisible();
+  if (await page.locator("article input[type=radio]").count()) await page.locator("article input[type=radio]").first().check();
+  else if (await page.locator("article input[type=checkbox]").count()) await page.locator("article input[type=checkbox]").first().check();
+  else if (await page.locator("article input[type=number]").count()) await page.locator("article input[type=number]").fill("1");
+  else await page.locator("article textarea").fill("cite the source and verify accuracy");
   await page.getByRole("button", { name: "Check answer" }).click();
   await expect(page.getByText(/Correct answer|Model answer/).first()).toBeVisible();
   await expect(page.getByText("Concept tested")).toBeVisible();
@@ -67,7 +67,7 @@ test("a student can complete the core preparation journey and resume later", asy
   await page.goto("/mocks");
   await page.getByLabel(/Sectional/).check();
   await page.locator('input[name="topicIds"]').first().check();
-  await page.getByLabel("Questions").fill("5");
+  await page.locator("#m-count").fill("5");
   await page.getByRole("button", { name: "Start mock" }).click();
   await page.waitForURL("**/attempt/**");
   await expect(page.getByRole("timer")).toBeVisible();

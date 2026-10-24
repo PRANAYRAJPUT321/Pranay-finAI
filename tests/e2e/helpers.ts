@@ -34,7 +34,10 @@ export async function answerAllAndSubmit(page: Page) {
     const next = page.getByRole("button", { name: /^Next/ });
     const finish = page.getByRole("button", { name: "Finish section" });
     if (await next.count()) {
+      const counter = page.getByText(/Question \d+ of \d+/).first();
+      const before = await counter.innerText();
       await next.click();
+      await expect(counter).not.toHaveText(before);
     } else if (await finish.count()) {
       page.once("dialog", (d) => d.accept());
       await finish.click();
