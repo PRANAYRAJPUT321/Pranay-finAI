@@ -57,7 +57,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         <div className="bg-grid-dark absolute inset-0 opacity-60" aria-hidden />
         <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="eyebrow text-mint-300">{enrollment.program.shortName} · {enrollment.level.name} <span className="text-white/40">/</span> Your preparation</p>
+            <p className="eyebrow text-mint-300">{enrollment.program.shortName} {enrollment.level.name}{enrollment.targetExamDate ? ` · exam ${fmtDate(enrollment.targetExamDate)}` : " · no exam date set"}</p>
             <h1 className="headline-xl mt-3 text-4xl uppercase sm:text-6xl"><span className="text-gold-500">Welcome</span> <span className="block text-white">back, {user.name.split(" ")[0]}</span></h1>
             <span className="rule-red mt-4" aria-hidden />
             <p className="mt-3 max-w-xl text-sm text-navy-100">Readiness: <strong className="text-white">{analytics.readiness.label}</strong> — {analytics.readiness.description}</p>

@@ -20,7 +20,7 @@ export function Reveal({ children, delay = 0, className = "", as: Tag = "div" }:
     io.observe(el);
     return () => io.disconnect();
   }, [el]);
-  return createElement(Tag, { ref: setEl, className: `reveal ${visible ? "is-visible" : ""} ${className}`, style: { "--delay": `${delay}ms` } as React.CSSProperties }, children);
+  return createElement(Tag, { ref: setEl, className: `reveal min-w-0 ${visible ? "is-visible" : ""} ${className}`, style: { "--delay": `${delay}ms` } as React.CSSProperties }, children);
 }
 
 /** Counts up to a number when first shown. Non-numeric values render as-is. */

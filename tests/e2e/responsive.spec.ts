@@ -21,8 +21,15 @@ test("landing, catalog and app pages fit a phone screen", async ({ page }) => {
     await page.goto(path);
     await noHorizontalScroll(page);
   }
-  await page.getByRole("button", { name: "Open menu" }).click();
-  await expect(page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Flashcards" })).toBeVisible();
-  await page.getByRole("navigation", { name: "Main" }).getByRole("link", { name: "Flashcards" }).click();
+  for (const path of ["/guide", "/materials", "/videos", "/get-app"]) {
+    await page.goto(path);
+    await noHorizontalScroll(page);
+  }
+  await page.getByRole("navigation", { name: "Quick" }).getByRole("link", { name: "Practice" }).click();
+  await expect(page).toHaveURL(/\/practice/);
+  await page.getByRole("button", { name: "More" }).click();
+  const menu = page.getByRole("dialog", { name: "Menu" });
+  await expect(menu.getByRole("link", { name: "Flashcards" })).toBeVisible();
+  await menu.getByRole("link", { name: "Flashcards" }).click();
   await expect(page).toHaveURL(/\/flashcards/);
 });

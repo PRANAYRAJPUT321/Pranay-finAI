@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { Bookmark, BookmarkCheck, Bot } from "lucide-react";
+import { Bookmark, BookmarkCheck, Bot, FileDown, PlayCircle } from "lucide-react";
 import { Alert, Badge, Card, CardTitle, LinkButton, PageHeader, TabLinks } from "@/components/ui";
 import { SubmitButton } from "@/components/forms";
 import { CalculatorWidget } from "@/components/calculator";
@@ -56,6 +56,8 @@ export default async function LessonPage({ params, searchParams }: { params: Pro
                 {bookmarked ? <BookmarkCheck className="h-4 w-4" aria-hidden /> : <Bookmark className="h-4 w-4" aria-hidden />} {bookmarked ? "Bookmarked" : "Bookmark"}
               </SubmitButton>
             </form>
+            <LinkButton href={`/videos/${lessonId}`} variant="gold" size="sm"><PlayCircle className="h-4 w-4" aria-hidden /> Watch explainer</LinkButton>
+            <a href={`/api/materials/lesson/${lessonId}`} download className="btn-secondary inline-flex items-center gap-2 rounded-full border border-white/40 px-3 py-1.5 text-sm font-medium text-white transition hover:bg-white hover:text-navy-950"><FileDown className="h-4 w-4" aria-hidden /> PDF</a>
             <LinkButton href={`/tutor?lesson=${lessonId}`} variant="secondary" size="sm"><Bot className="h-4 w-4" aria-hidden /> Ask the tutor</LinkButton>
           </>
         }

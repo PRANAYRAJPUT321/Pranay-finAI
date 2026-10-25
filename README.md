@@ -64,6 +64,12 @@ Architecture: see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 - **Formula library** — search, filters, variables, conventions, assumptions, worked examples, calculators, recall drill, linked practice.
 - **Past papers** — links to official past papers and samples (never re-hosted), PD FinPrep original mocks, admin-managed licensed resources.
 - **Gamification (optional)** — streaks, milestones for meaningful activity, weekly targets, opt-in study groups/accountability pairs without public leaderboards; all switchable off.
+- **Exam guide** — every level of every program with upcoming windows and live countdowns, registration deadlines, fee tables, published pass rates (marked official/reported), an editorial difficulty rating, format, passing standard, official and registration links and cited sources, all dated "as of" and flagged unverified until an admin checks them. Public at `/exam-guide`, in-app at `/guide`.
+- **Study materials (PDF)** — downloadable lesson notes, topic packs, complete syllabus study packs, formula sheets and exam fact sheets, rendered server-side with pdfkit and bundled DejaVu fonts (Unicode symbols such as σ, ×, ₹ print correctly).
+- **Video lessons** — every published lesson becomes a short animated explainer (big idea, key formula, worked example, exam trap, summary) with narration from the device's text-to-speech, captions, chapters, speed control, keyboard shortcuts and full screen. Scenes are generated deterministically from reviewed lesson content; nothing is invented beyond it.
+- **Notifications** — header bell with live polling, browser notifications, optional web push (VAPID) to installed devices; reminders for today's plan, due flashcards, exam countdown (60/30/14/7/3/1 days) and registration deadlines, each created once and switchable off.
+- **Installable app (PWA)** — manifest, service worker with offline fallback, install button and QR code on `/get-app`, iOS/Android/desktop instructions.
+- **Navigation** — grouped sidebar, Ctrl/⌘+K quick search, phone bottom tab bar with a full-screen menu; editorial green/black/white/red design.
 - **Admin console** — question CRUD with versioning and review workflow, publishing gated by schema + answer-key checks, answer-key correction with automatic re-grading, CSV/JSON import with row-level validation, lesson editing, syllabus verification/cloning/versioning, topic weights, past-paper resources, content reports, user roles and manual tier grants, audit log, aggregated analytics.
 
 ## Integrations requiring credentials
@@ -73,6 +79,7 @@ Architecture: see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 | PostgreSQL | `DATABASE_URL` | Required. |
 | AI tutor | `ANTHROPIC_API_KEY` or `OPENAI_API_KEY` | Offline tutor assembles cited course material (clearly labelled). |
 | Email | `EMAIL_PROVIDER=resend`, `RESEND_API_KEY` | Development logs links to the console; production does not send emails. |
+| Web push | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` (`npx web-push generate-vapid-keys`) | In-app notifications plus browser alerts while the app is open. |
 | Billing | not integrated | Tiers are shown; upgrades are labelled unavailable; admins can grant tiers manually (audited). |
 
 ## Known limitations and next steps
@@ -81,5 +88,7 @@ Architecture: see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 - Seeded exam structures and weights are unverified until checked by an administrator against official sources.
 - Written-response grading is keyword-based and indicative only.
 - Proficiency, readiness bands and SRS intervals are rule-based heuristics that have not been statistically validated.
-- Email reminders, payment integration, video content and question-level psychometrics (IRT) are not implemented yet.
+- Exam dates, fees and pass rates were researched on 24 Oct 2026 and are unverified until an administrator confirms them; they change every cycle.
+- Video narration depends on the device's speech voices (quality varies; captions always available). Videos are animated explainers, not recorded footage.
+- Email reminders, payment integration and question-level psychometrics (IRT) are not implemented yet.
 - The AI tutor uses keyword retrieval; embedding-based retrieval would improve grounding.

@@ -15,15 +15,17 @@ export default async function ProgramPage({ params }: { params: Promise<{ slug: 
   return (
     <>
       <PageHeader
+        eyebrow={`${program.awardingBody} · ${program.country}`}
         title={program.name}
         description={program.description}
         actions={
           <>
             {program.officialUrl && (
-              <a href={program.officialUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 rounded-lg border border-navy-200 bg-white px-3 py-2 text-sm text-navy-800 hover:bg-navy-50">
+              <a href={program.officialUrl} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 rounded-full border border-white/40 px-4 py-2 text-sm text-white transition hover:bg-white hover:text-navy-950">
                 Official source <ExternalLink className="h-3.5 w-3.5" aria-hidden />
               </a>
             )}
+            <LinkButton href={`/exam-guide?program=${program.slug}`} variant="secondary">Dates, fees &amp; difficulty</LinkButton>
             <LinkButton href="/onboarding">Prepare for this exam</LinkButton>
           </>
         }

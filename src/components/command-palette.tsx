@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Search, CornerDownLeft } from "lucide-react";
 import { NAV } from "./nav";
 
@@ -21,7 +21,6 @@ export function CommandPalette() {
   const [open, setOpen] = useState(false);
   const [q, setQ] = useState("");
   const [active, setActive] = useState(0);
-  const inputRef = useRef<HTMLInputElement>(null);
   const items = useMemo(() => {
     const all = [...NAV.map((n) => ({ href: n.href, label: n.label, hint: "Go to" })), ...EXTRA];
     const s = q.trim().toLowerCase();
@@ -38,10 +37,6 @@ export function CommandPalette() {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
-  useEffect(() => {
-    if (open) setTimeout(() => inputRef.current?.focus(), 10);
-  }, [open]);
-
   const go = (href: string) => {
     setOpen(false);
     setQ("");
@@ -64,7 +59,7 @@ export function CommandPalette() {
             <div className="flex items-center gap-3 border-b border-white/10 px-4">
               <Search className="h-4 w-4 text-mint-300" aria-hidden />
               <input
-                ref={inputRef}
+                autoFocus
                 value={q}
                 onChange={(e) => {
                   setQ(e.target.value);
@@ -81,7 +76,7 @@ export function CommandPalette() {
                 }}
                 placeholder="Where do you want to go?"
                 aria-label="Search pages and actions"
-                className="w-full bg-transparent py-4 text-sm text-white placeholder:text-navy-300 focus:outline-none"
+                className="w-full bg-transparent py-4 text-sm text-white !outline-none placeholder:text-navy-300"
               />
             </div>
             <ul className="max-h-80 overflow-y-auto p-2" role="listbox">

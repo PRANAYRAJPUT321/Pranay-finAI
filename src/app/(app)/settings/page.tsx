@@ -1,4 +1,6 @@
 import { Alert, Badge, Card, CardTitle, PageHeader } from "@/components/ui";
+import { PushToggle } from "@/components/push-toggle";
+import { InstallAppButton } from "@/components/pwa";
 import { DeleteAccountForm, PasswordForm, ProfileForm, ResendVerification } from "@/components/account-forms";
 import { requireUser } from "@/server/auth/current";
 import { prisma } from "@/server/db";
@@ -23,6 +25,14 @@ export default async function SettingsPage() {
         <p className="mb-4 text-sm text-slate-600">{user.email} {user.emailVerifiedAt ? <Badge tone="green">verified</Badge> : <Badge tone="amber">not verified</Badge>}</p>
         {!user.emailVerifiedAt && <div className="mb-4"><ResendVerification /></div>}
         <ProfileForm user={user} />
+      </Card>
+      <Card>
+        <CardTitle>Notifications &amp; app</CardTitle>
+        <p className="mb-4 text-sm text-slate-600">In-app reminders follow the preference above. Enable device notifications to receive them on this phone or computer, and install PD FinPrep for a full-screen app.</p>
+        <div className="flex flex-wrap items-start gap-6">
+          <PushToggle />
+          <InstallAppButton variant="light" />
+        </div>
       </Card>
       <Card>
         <CardTitle>Password</CardTitle>

@@ -20,7 +20,9 @@ const RATINGS = [
   { v: 4 as const, label: "Easy", hint: "Instant", variant: "gold" as const },
 ];
 
-export function FlashcardReview({ cards }: { cards: ReviewCard[] }) {
+export function FlashcardReview({ cards: initial }: { cards: ReviewCard[] }) {
+  // Snapshot the queue for this session: reviewing revalidates the page, which would otherwise shrink the list under us.
+  const [cards] = useState(initial);
   const [i, setI] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [pending, start] = useTransition();

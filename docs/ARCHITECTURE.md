@@ -4,7 +4,7 @@
 
 - **Next.js 16 (App Router) + React 19 + TypeScript** — server components for pages, server actions for forms, route handlers for JSON APIs (attempt runner, tutor, reports, export, health).
 - **PostgreSQL + Prisma 6** — schema in `prisma/schema.prisma`, migrations in `prisma/migrations`, idempotent seed in `prisma/seed.ts` + `prisma/seed/*`.
-- **Tailwind CSS 4** — design tokens (navy/gold) and the motion layer live in `src/app/globals.css`.
+- **Tailwind CSS 4** — design tokens (`navy` = green-black, `gold` = red, `mint` accent; editorial layer with Playfair Display) and the motion layer live in `src/app/globals.css`.
 - **Recharts** for charts, **decimal.js** for money-safe arithmetic, **zod** for validation, **bcryptjs** for password hashing, **@anthropic-ai/sdk** for the optional AI tutor.
 - **Vitest** (unit + integration) and **Playwright** (end-to-end).
 
@@ -26,7 +26,9 @@ src/
     learning/          enrollment, flashcards, notes/bookmarks, gamification
     ai/                provider abstraction, tools, grounding, offline tutor, tutor service
     admin/             content administration, audit log
-    notifications/     email abstraction, daily reminders
+    notifications/     email abstraction, reminder rules (pure), notify() + web push
+    materials/         PDF toolkit (pdfkit + bundled fonts in assets/fonts) and document builders
+  lib/video/           lesson → explainer scene script (pure, unit tested)
 ```
 
 Business logic sits in `src/server/**` (framework-agnostic and covered by tests);
@@ -39,6 +41,8 @@ pages and components only render and call services.
 - **Server-authoritative assessments.** Timing is computed from stored elapsed time and `resumedAt`; every request applies the clock (advance section / auto-submit). Payloads sent to the browser are redacted until answers may be revealed.
 - **Transparent heuristics.** Proficiency, mastery thresholds, recommendation priorities, SRS intervals and readiness bands are documented in code and shown to learners with their limitations.
 - **Security.** Hashed session tokens in httpOnly SameSite cookies, bcrypt password hashes, Postgres-backed rate limits, role checks in every action/handler (`assertRole`), same-origin checks for JSON writes, audit log for content/role changes, data export and deletion.
+- **Exam facts are data, not copy.** `ExamLevel.info` holds dated, sourced facts validated by `examInfoSchema`; the UI always shows the "as of" date, sources and verification state, and reminders read registration deadlines from `ExamWindow`.
+- **Generated media stays grounded.** PDFs and video explainers are rendered from the same reviewed lesson/formula records; the video script adds no new claims and narration runs in the browser.
 - **Graceful degradation.** No AI key → offline tutor; provider failure → offline fallback; no email provider → console in development; no database → friendly error page and `/api/health` diagnostics.
 
 ## Data model (summary)

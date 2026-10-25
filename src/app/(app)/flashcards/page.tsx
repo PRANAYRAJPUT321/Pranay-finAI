@@ -54,7 +54,7 @@ async function ReviewTab({ userId, topicId, topicName, weak, now, topics }: { us
     <div className="grid gap-6 lg:grid-cols-3">
       <div className="lg:col-span-2">
         {(topicName || weak) && <p className="mb-3 text-sm text-slate-600">Filtered: {weak ? "weak topics" : topicName} · <a className="underline" href="/flashcards">show all</a></p>}
-        <FlashcardReview key={`${topicId}-${weak}-${cards.length}`} cards={cards} />
+        <FlashcardReview key={`${topicId}-${weak}`} cards={cards} />
       </div>
       <Card>
         <CardTitle>Focus a session</CardTitle>

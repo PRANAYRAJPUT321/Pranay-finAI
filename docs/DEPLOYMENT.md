@@ -39,6 +39,7 @@ string as `DATABASE_URL` under **Settings → Environment Variables**.
 | `AI_PROVIDER` | Optional | Force `anthropic`, `openai` or `offline`. Default: first configured key, else offline. |
 | `EMAIL_PROVIDER`, `RESEND_API_KEY`, `EMAIL_FROM` | Optional | Transactional email (verification, password reset). Without it, emails are not delivered in production. |
 | `AI_TUTOR_HOURLY_LIMIT` | Optional | Tutor messages per user per hour (default 30). |
+| `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` | Optional | Web push to installed devices. Generate once with `npx web-push generate-vapid-keys`; subject is `mailto:you@yourdomain`. Without them, notifications are in-app and in the open browser tab only. |
 | `ENFORCE_ENTITLEMENTS` | Optional | Keep `false` — billing is not integrated. |
 
 ### 3. Redeploy
