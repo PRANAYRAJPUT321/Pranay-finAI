@@ -7,6 +7,8 @@ import { PrismaClient, type Prisma } from "@prisma/client";
 import bcrypt from "bcryptjs";
 import { programs } from "./seed/catalog";
 import { formulas } from "./seed/formulas";
+import { examInfo } from "./seed/exam-info";
+import { examInfoSchema } from "../src/server/catalog/exam-info";
 import { cfaL1 } from "./seed/cfa-l1";
 import { cpaFar, frmP1, nismVA } from "./seed/other-curricula";
 import type { CurriculumSeed } from "./seed/types";
@@ -248,6 +250,29 @@ async function seedUsers() {
   return prisma.user.findFirst({ where: { role: "ADMIN" }, orderBy: { createdAt: "asc" } });
 }
 
+/** Loads researched exam facts and refreshes dated exam windows (always unverified). */
+async function seedExamInfo() {
+  let count = 0;
+  for (const [key, raw] of Object.entries(examInfo)) {
+    const [slug, code] = key.split(":");
+    const info = examInfoSchema.parse(raw);
+    const level = await prisma.examLevel.findFirst({ where: { code, program: { slug } }, include: { syllabi: { where: { status: "CURRENT" }, take: 1 } } });
+    if (!level) throw new Error(`Exam info for unknown level ${key}`);
+    await prisma.examLevel.update({ where: { id: level.id }, data: { info: json(info) } });
+    const sv = level.syllabi[0];
+    if (sv) {
+      await prisma.examWindow.deleteMany({ where: { syllabusVersionId: sv.id, verified: false } });
+      for (const u of info.upcoming.filter((x) => x.start && x.end)) {
+        await prisma.examWindow.create({
+          data: { syllabusVersionId: sv.id, label: u.label, startDate: new Date(`${u.start}T00:00:00Z`), endDate: new Date(`${u.end}T00:00:00Z`), registrationDeadline: u.deadline ? new Date(`${u.deadline}T00:00:00Z`) : null, verified: false, sourceUrl: info.sources[0].url },
+        });
+      }
+    }
+    count++;
+  }
+  return count;
+}
+
 async function main() {
   const source = await seedSources();
   await seedCatalog();
@@ -256,6 +281,8 @@ async function main() {
   let questions = 0;
   for (const c of [cfaL1, frmP1, cpaFar, nismVA]) questions += await seedCurriculum(c, source.id, admin?.id ?? null);
   await seedPastPapers();
+  const infoCount = await seedExamInfo();
+  console.log(`Exam facts loaded for ${infoCount} levels (as of 2026-10-24, unverified).`);
   console.log(`Seed complete: ${programs.length} programs, ${formulas.length} formulas, ${questions} questions (all answer keys verified).`);
   console.log(admin ? `Admin account: ${admin.email}` : "No admin account (set SEED_ADMIN_EMAIL and SEED_ADMIN_PASSWORD to create one).");
 }

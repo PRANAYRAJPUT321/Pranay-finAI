@@ -42,7 +42,7 @@ export function CountUp({ value, suffix = "", decimals = 0, duration = 900 }: { 
   return <>{shown.toFixed(decimals)}{suffix}</>;
 }
 
-const COLORS = ["#c9a227", "#e0c25b", "#1f3863", "#5f7fb3", "#10b981", "#f5ecc9"];
+const COLORS = ["#e3262e", "#ff8f89", "#0e211c", "#8fd3bb", "#ffffff", "#4ea688"];
 
 /** A short celebratory burst (respecting reduced-motion via the global CSS rule). */
 export function Confetti({ pieces = 70 }: { pieces?: number }) {

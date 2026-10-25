@@ -1,0 +1,22 @@
+{
+  "name": "PD FinPrep — Finance certification preparation",
+  "short_name": "PD FinPrep",
+  "description": "Study plans, lessons, practice, mocks, flashcards and video explainers for finance, accounting, tax and risk exams.",
+  "start_url": "/dashboard?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#070f0c",
+  "theme_color": "#070f0c",
+  "categories": ["education", "finance", "productivity"],
+  "icons": [
+    { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "Today's plan", "url": "/plan", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Quick practice", "url": "/practice", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Flashcards", "url": "/flashcards", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] }
+  ]
+}

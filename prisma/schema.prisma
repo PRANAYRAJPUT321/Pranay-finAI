@@ -66,6 +66,7 @@ model User {
   achievements      Achievement[]
   auditLogs         AuditLog[]
   groupMemberships  StudyGroupMember[]
+  pushSubscriptions PushSubscription[]
   ownedGroups       StudyGroup[]
   entitlements      Entitlement[]
   questionVersions  QuestionVersion[]
@@ -210,6 +211,9 @@ model ExamLevel {
   name        String
   order       Int
   description String?
+  // Researched exam facts (fees, upcoming dates, pass rates, difficulty, links, sources, asOf).
+  // Validated by src/server/catalog/exam-info.ts; shown with "as of" date and sources.
+  info        Json?
   program     ExamProgram       @relation(fields: [programId], references: [id], onDelete: Cascade)
   syllabi     SyllabusVersion[]
   enrollments Enrollment[]
@@ -956,4 +960,17 @@ model PastPaper {
   source              ContentSource?     @relation(fields: [sourceId], references: [id], onDelete: SetNull)
 
   @@index([programId])
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  userAgent String?
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }

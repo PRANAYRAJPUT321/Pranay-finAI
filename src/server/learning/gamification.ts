@@ -4,6 +4,7 @@
  * count — time merely spent in the app does not. Learners can disable all of it.
  */
 import { prisma } from "@/server/db";
+import { notify } from "@/server/notifications/service";
 import { utcDay, toDateKey, addDays } from "@/server/planner/generate";
 
 export const ACHIEVEMENTS: Record<string, { title: string; description: string }> = {
@@ -56,7 +57,7 @@ async function grant(userId: string, key: string, meta?: object) {
   const user = await prisma.user.findUnique({ where: { id: userId }, select: { gamificationEnabled: true, inAppReminders: true } });
   if (user?.gamificationEnabled && user.inAppReminders) {
     const a = ACHIEVEMENTS[key];
-    await prisma.notification.create({ data: { userId, type: "achievement", title: `Milestone: ${a.title}`, body: a.description, link: "/analytics#achievements" } });
+    await notify(userId, { type: "achievement", title: `Milestone: ${a.title}`, body: a.description, link: "/analytics#achievements" });
   }
   return key;
 }

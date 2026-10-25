@@ -1,15 +1,19 @@
 import Link from "next/link";
-import { ArrowRight, BarChart3, BookOpen, Bot, CalendarDays, CheckCircle2, Layers, ShieldCheck, Sparkles, Timer } from "lucide-react";
+import { ArrowRight, BarChart3, BellRing, BookOpen, Bot, CalendarDays, CheckCircle2, FileDown, Layers, PlayCircle, ShieldCheck, Smartphone, Timer } from "lucide-react";
 import { PublicFooter, PublicHeader } from "@/components/public-header";
 import { CountUp, Reveal } from "@/components/motion";
+import { HeroSlider, HeroVisual } from "@/components/hero-slider";
+import { InstallAppButton } from "@/components/pwa";
 import { prisma } from "@/server/db";
+import { getExamGuide } from "@/server/catalog/guide";
+import { daysUntil } from "@/server/catalog/exam-info";
 
 export const dynamic = "force-dynamic";
 
 const CYCLE = [
   { t: "Diagnostic", d: "A baseline across the whole syllabus." },
   { t: "Personal plan", d: "Day-by-day, built around your calendar." },
-  { t: "Learn", d: "Structured lessons at your level." },
+  { t: "Learn", d: "Lessons, videos and PDF notes at your level." },
   { t: "Practice", d: "Exam-style questions, full explanations." },
   { t: "Spaced revision", d: "Flashcards timed to your memory." },
   { t: "Mock exams", d: "Timed, sectioned simulations." },
@@ -19,126 +23,116 @@ const CYCLE = [
 ];
 
 const FEATURES = [
-  { icon: CalendarDays, title: "Adaptive study plans", body: "Built from your exam date, availability, topic weights and diagnostic — with honest workload warnings and one-click recovery from missed days." },
-  { icon: BookOpen, title: "Structured lessons", body: "Objectives, intuition, formal definitions, worked examples, traps and knowledge checks — in beginner, intermediate and advanced modes." },
+  { icon: CalendarDays, title: "Adaptive study plans", body: "Built from your exam date, availability, topic weights and diagnostic — with workload warnings and one-click recovery from missed days." },
+  { icon: PlayCircle, title: "Video explainers", body: "Short narrated, animated explainers generated from every lesson: intuition, formula, worked example, common trap, summary." },
+  { icon: FileDown, title: "PDF study notes", body: "Download lessons, formula sheets, exam fact sheets and full topic packs to read offline or print." },
   { icon: CheckCircle2, title: "Verified answer keys", body: "Every numerical answer is recomputed by decimal-safe calculators before it is published. Never left to a language model." },
   { icon: Timer, title: "Mock exam simulator", body: "Section timers, closed sections, autosave and full reports — modelled on each exam's configured structure." },
   { icon: Layers, title: "Spaced repetition", body: "Formula, concept and mistake flashcards scheduled from your own honest recall ratings." },
   { icon: Bot, title: "AI tutor", body: "Teach Me, Test My Thinking and Find My Mistake — grounded in course material, with deterministic calculators." },
   { icon: BarChart3, title: "Transparent analytics", body: "Mastery separated from coverage, mock trends, error types and a readiness summary that states its limits." },
-  { icon: ShieldCheck, title: "Built with integrity", body: "Original questions only. Official past papers are linked at the source. No guaranteed-pass promises." },
 ];
 
-const FALLBACK_EXAMS = ["CFA", "FRM", "CAIA", "CPA", "ACCA", "CMA", "CA (India)", "EA", "NISM", "CFP", "CTA"];
+const FALLBACK_EXAMS = ["CFA", "FRM", "CAIA", "CPA", "ACCA", "CMA", "CA (India)", "EA", "NISM", "CFP"];
 
-async function loadStats() {
+async function loadData() {
   try {
-    const [programs, questions, lessons, formulas] = await Promise.all([
+    const [programs, questions, lessons, formulas, guide] = await Promise.all([
       prisma.examProgram.findMany({ where: { isActive: true }, select: { slug: true, shortName: true }, orderBy: { name: "asc" } }),
       prisma.question.count({ where: { status: "PUBLISHED" } }),
       prisma.lesson.count({ where: { status: "PUBLISHED" } }),
       prisma.formula.count(),
+      getExamGuide(),
     ]);
-    return { programs, questions, lessons, formulas };
+    const now = new Date();
+    const upcoming = guide
+      .flatMap((p) => p.levels.flatMap((l) => (l.info?.upcoming ?? []).map((u) => ({ program: p.shortName, slug: p.slug, level: l.name, label: u.label, dates: u.dates, days: daysUntil(u.start, now) }))))
+      .filter((u): u is typeof u & { days: number } => u.days !== null)
+      .sort((a, b) => a.days - b.days);
+    // One entry per program so the strip shows variety.
+    const seen = new Set<string>();
+    const strip = upcoming.filter((u) => (seen.has(u.program) ? false : (seen.add(u.program), true))).slice(0, 8);
+    return { programs, questions, lessons, formulas, strip };
   } catch {
-    return null; // database not reachable: render the marketing page without live counts
+    return null; // database not reachable: render the marketing page without live data
   }
 }
 
 export default async function LandingPage() {
-  const stats = await loadStats();
-  const exams = stats?.programs.length ? stats.programs : FALLBACK_EXAMS.map((s) => ({ slug: "", shortName: s }));
+  const data = await loadData();
+  const exams = data?.programs.length ? data.programs : FALLBACK_EXAMS.map((s) => ({ slug: "", shortName: s }));
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col bg-navy-950">
       <PublicHeader />
       <main id="main" className="flex-1">
         {/* Hero */}
-        <section className="bg-gradient-navy relative overflow-hidden text-white">
-          <div className="aurora" aria-hidden />
-          <div className="bg-grid-dark absolute inset-0" aria-hidden />
-          <div className="relative mx-auto grid max-w-6xl items-center gap-12 px-4 pb-20 pt-14 sm:px-6 lg:grid-cols-[1.1fr_1fr] lg:pt-24">
-            <div>
-              <p className="animate-fade-up inline-flex items-center gap-2 rounded-full border border-gold-400/30 bg-white/5 px-3 py-1 text-xs font-medium text-gold-200 backdrop-blur">
-                <Sparkles className="h-3.5 w-3.5 text-gold-400" aria-hidden /> Finance, accounting, tax &amp; risk certifications
-              </p>
-              <h1 className="animate-fade-up mt-5 text-4xl font-bold leading-[1.08] tracking-tight sm:text-6xl" style={{ "--delay": "80ms" } as React.CSSProperties}>
-                Your exam. Your plan. <span className="text-gradient-gold">Your evidence.</span>
-              </h1>
-              <p className="animate-fade-up mt-6 max-w-xl text-lg leading-relaxed text-navy-100" style={{ "--delay": "160ms" } as React.CSSProperties}>
-                PD FinPrep is a study coach that turns your syllabus, schedule and practice results into exactly what to do next — for CFA, FRM, CPA, ACCA, CMA, CA, EA, NISM, CFP and more.
-              </p>
-              <div className="animate-fade-up mt-9 flex flex-wrap gap-3" style={{ "--delay": "240ms" } as React.CSSProperties}>
-                <Link href="/register" className="btn-shine bg-gradient-gold group inline-flex items-center gap-2 rounded-xl px-6 py-3 text-base font-semibold text-navy-950 shadow-xl shadow-gold-500/30 transition hover:-translate-y-0.5 hover:shadow-gold-500/50">
-                  Start free <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" aria-hidden />
-                </Link>
-                <Link href="/catalog" className="inline-flex items-center gap-2 rounded-xl border border-white/20 bg-white/5 px-6 py-3 text-base font-semibold text-white backdrop-blur transition hover:-translate-y-0.5 hover:border-gold-400/60 hover:bg-white/10">
-                  Browse exams
-                </Link>
-              </div>
-              <p className="animate-fade-up mt-5 text-xs text-navy-300" style={{ "--delay": "320ms" } as React.CSSProperties}>No payment details. We never promise a pass — we show you the evidence.</p>
-            </div>
-
-            {/* Illustrative product preview (static UI, not real user data) */}
-            <div className="animate-fade-up relative" style={{ "--delay": "200ms" } as React.CSSProperties} aria-hidden>
-              <div className="float glass-dark relative rounded-3xl p-5 shadow-2xl shadow-black/40">
-                <div className="flex items-center justify-between">
-                  <p className="text-sm font-semibold text-white">Today&apos;s plan</p>
-                  <span className="rounded-full bg-gold-400/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-gold-300">Illustrative preview</span>
-                </div>
-                <ul className="mt-4 space-y-2.5">
-                  {[
-                    ["Learn", "Bond valuation & yield", "45 min", "from-navy-400 to-navy-600"],
-                    ["Practice", "Fixed income — 12 questions", "30 min", "from-sky-400 to-sky-600"],
-                    ["Revise", "Due flashcards · duration", "15 min", "from-gold-300 to-gold-600"],
-                  ].map(([k, t, m, g]) => (
-                    <li key={t} className="flex items-center gap-3 rounded-xl bg-white/5 p-3 ring-1 ring-white/10">
-                      <span className={`grid h-9 w-9 place-items-center rounded-lg bg-gradient-to-br ${g} text-[10px] font-bold`}>{k.slice(0, 2).toUpperCase()}</span>
-                      <span className="min-w-0 flex-1"><span className="block truncate text-sm text-white">{t}</span><span className="text-xs text-navy-300">{k} · {m}</span></span>
-                    </li>
-                  ))}
-                </ul>
-                <div className="mt-5 grid grid-cols-3 gap-3">
-                  {[["Coverage", 62], ["Accuracy", 74], ["Retention", 81]].map(([l, v]) => (
-                    <div key={l} className="rounded-xl bg-white/5 p-3 ring-1 ring-white/10">
-                      <p className="text-[10px] uppercase tracking-wider text-navy-300">{l}</p>
-                      <p className="mt-1 text-lg font-bold text-white">{v}%</p>
-                      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-white/10"><div className="bar-fill h-full rounded-full bg-gradient-to-r from-gold-300 to-gold-500" style={{ width: `${v}%` }} /></div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-              <div className="float glass-dark absolute -bottom-20 -left-8 hidden w-56 rounded-2xl p-4 shadow-xl sm:block" style={{ animationDelay: "1.5s" }}>
-                <p className="text-[11px] font-semibold text-gold-300">✓ Answer key verified</p>
-                <p className="mt-1 text-xs text-navy-100">Price = 965.35 — recomputed by the bond calculator before publishing.</p>
-              </div>
-            </div>
+        <section className="bg-ink relative overflow-hidden text-white">
+          <span className="red-beam left-[60%]" aria-hidden />
+          <span className="red-beam left-[78%] opacity-50" style={{ animationDelay: "3s" }} aria-hidden />
+          <span className="floor-glow" aria-hidden />
+          <div className="bg-grid-dark absolute inset-0 opacity-50" aria-hidden />
+          <div className="relative mx-auto grid min-h-[calc(100vh-4.5rem)] max-w-7xl items-center gap-10 px-4 pb-16 pt-12 sm:px-6 lg:grid-cols-[1.15fr_1fr] lg:pt-16">
+            <HeroSlider />
+            <div className="hidden lg:block"><HeroVisual /></div>
           </div>
-
-          {/* Exam marquee */}
-          <div className="relative border-t border-white/10 bg-white/[0.03] py-4">
+          <div className="relative border-t border-white/10 bg-black/20 py-4">
             <div className="overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
-              <div className="marquee gap-10 pr-10">
+              <div className="marquee gap-12 pr-12">
                 {[...exams, ...exams].map((e, i) => (
-                  <span key={`${e.shortName}-${i}`} className="whitespace-nowrap text-sm font-semibold tracking-wide text-navy-200/80">{e.shortName}<span className="ml-10 text-gold-500/60">◆</span></span>
+                  <span key={`${e.shortName}-${i}`} className="font-display whitespace-nowrap text-xl font-bold uppercase tracking-wider text-white/70">
+                    {e.shortName}<span className="ml-12 text-gold-500">◆</span>
+                  </span>
                 ))}
               </div>
             </div>
           </div>
         </section>
 
-        {/* Live content counts (real data from the catalog) */}
-        {stats && (
-          <section className="relative -mt-px bg-white">
-            <div className="mx-auto grid max-w-6xl grid-cols-2 gap-6 px-4 py-10 text-center sm:px-6 md:grid-cols-4">
+        {/* Upcoming exam dates (researched facts, linked to the guide) */}
+        {data && data.strip.length > 0 && (
+          <section className="bg-white">
+            <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6">
+              <Reveal className="flex flex-wrap items-end justify-between gap-4">
+                <div>
+                  <p className="eyebrow text-gold-600">Countdown / Upcoming windows</p>
+                  <h2 className="headline-xl mt-3 text-4xl uppercase text-navy-950 sm:text-6xl">Next <span className="text-gold-500">Exams</span></h2>
+                </div>
+                <Link href="/exam-guide" className="pill-outline pill-outline-dark">All dates &amp; fees <ArrowRight className="h-4 w-4" aria-hidden /></Link>
+              </Reveal>
+              <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                {data.strip.map((u, i) => (
+                  <Reveal key={`${u.program}-${u.label}`} delay={(i % 4) * 80}>
+                    <Link href={`/exam-guide?program=${u.slug}`} className="card-hover group relative block h-full overflow-hidden rounded-2xl border border-slate-200 bg-white p-5">
+                      <span className="absolute right-4 top-4 text-[10px] font-semibold uppercase tracking-widest text-slate-400">{String(i + 1).padStart(2, "0")}</span>
+                      <p className="font-display text-5xl font-black text-navy-950 transition-colors group-hover:text-gold-500"><CountUp value={u.days} /></p>
+                      <p className="eyebrow mt-1 text-[0.55rem] text-slate-500">days to go</p>
+                      <span className="rule-red mt-4" aria-hidden />
+                      <p className="mt-3 font-semibold text-navy-950">{u.program} · {u.level}</p>
+                      <p className="text-sm text-slate-600">{u.label}</p>
+                      <p className="text-xs text-slate-500">{u.dates}</p>
+                    </Link>
+                  </Reveal>
+                ))}
+              </div>
+              <p className="mt-4 text-xs text-slate-500">Dates are collected from official sources and can change — always confirm with the examining body.</p>
+            </div>
+          </section>
+        )}
+
+        {/* Live content counts */}
+        {data && (
+          <section className="bg-ink relative overflow-hidden text-white">
+            <span className="red-beam left-[10%] opacity-40" aria-hidden />
+            <div className="relative mx-auto grid max-w-7xl grid-cols-2 gap-8 px-4 py-14 sm:px-6 md:grid-cols-4">
               {[
-                ["Exam programs", stats.programs.length],
-                ["Original questions", stats.questions],
-                ["Structured lessons", stats.lessons],
-                ["Formulas with calculators", stats.formulas],
+                ["Exam programs", data.programs.length],
+                ["Original questions", data.questions],
+                ["Structured lessons", data.lessons],
+                ["Formulas with calculators", data.formulas],
               ].map(([l, v], i) => (
-                <Reveal key={l as string} delay={i * 80}>
-                  <p className="text-gradient-navy text-4xl font-black"><CountUp value={v as number} /></p>
-                  <p className="mt-1 text-sm text-slate-500">{l}</p>
+                <Reveal key={l as string} delay={i * 80} className="border-l border-white/15 pl-5">
+                  <p className="font-display text-5xl font-black text-white"><CountUp value={v as number} /></p>
+                  <p className="eyebrow mt-2 text-[0.6rem] text-mint-300">{l}</p>
                 </Reveal>
               ))}
             </div>
@@ -146,23 +140,25 @@ export default async function LandingPage() {
         )}
 
         {/* Features */}
-        <section className="relative overflow-hidden bg-slate-50">
-          <div className="aurora aurora-light opacity-70" aria-hidden />
-          <div className="relative mx-auto max-w-6xl px-4 py-20 sm:px-6">
-            <Reveal className="mx-auto max-w-2xl text-center">
-              <p className="text-sm font-semibold uppercase tracking-widest text-gold-600">Everything in one workflow</p>
-              <h2 className="text-gradient-navy mt-2 text-3xl font-bold sm:text-4xl">Study smarter, measure honestly</h2>
-              <p className="mt-4 text-slate-600">Each part feeds the next, so your plan keeps adapting to real evidence instead of guesswork.</p>
+        <section className="relative overflow-hidden bg-[#f4f6f4]">
+          <div className="relative mx-auto max-w-7xl px-4 py-20 sm:px-6">
+            <Reveal className="max-w-3xl">
+              <p className="eyebrow text-gold-600">Everything in one workflow</p>
+              <h2 className="headline-xl mt-3 text-4xl uppercase text-navy-950 sm:text-6xl">Study <span className="text-gold-500">Smarter</span><span className="block">Measure honestly</span></h2>
+              <span className="rule-red mt-5" aria-hidden />
             </Reveal>
-            <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="mt-12 grid gap-px overflow-hidden rounded-3xl bg-navy-950/10 sm:grid-cols-2 lg:grid-cols-4">
               {FEATURES.map(({ icon: Icon, title, body }, i) => (
-                <Reveal key={title} delay={(i % 4) * 90}>
-                  <div className="card-hover group h-full rounded-2xl border border-slate-200/80 bg-white/90 p-6 shadow-sm backdrop-blur">
-                    <span className="grid h-11 w-11 place-items-center rounded-xl bg-gradient-to-br from-navy-800 to-navy-950 text-gold-400 shadow-lg shadow-navy-900/20 transition-transform duration-300 group-hover:-rotate-6 group-hover:scale-110">
-                      <Icon className="h-5 w-5" aria-hidden />
-                    </span>
-                    <h3 className="mt-4 font-semibold text-navy-900">{title}</h3>
-                    <p className="mt-2 text-sm leading-relaxed text-slate-600">{body}</p>
+                <Reveal key={title} delay={(i % 4) * 90} className="h-full">
+                  <div className="group h-full bg-white p-7 transition-colors duration-300 hover:bg-navy-950">
+                    <div className="flex items-center justify-between">
+                      <span className="grid h-11 w-11 place-items-center rounded-full border border-navy-950/15 text-gold-500 transition group-hover:border-gold-500 group-hover:bg-gold-500 group-hover:text-white">
+                        <Icon className="h-5 w-5" aria-hidden />
+                      </span>
+                      <span className="font-display text-sm font-bold text-slate-300 group-hover:text-white/40">{String(i + 1).padStart(2, "0")}</span>
+                    </div>
+                    <h3 className="font-display mt-5 text-xl font-bold text-navy-950 group-hover:text-white">{title}</h3>
+                    <p className="mt-2 text-sm leading-relaxed text-slate-600 group-hover:text-navy-100">{body}</p>
                   </div>
                 </Reveal>
               ))}
@@ -170,21 +166,54 @@ export default async function LandingPage() {
           </div>
         </section>
 
+        {/* App + notifications */}
+        <section className="bg-ink relative overflow-hidden text-white">
+          <span className="red-beam left-[70%]" aria-hidden />
+          <span className="floor-glow" aria-hidden />
+          <div className="relative mx-auto grid max-w-7xl items-center gap-10 px-4 py-20 sm:px-6 lg:grid-cols-2">
+            <Reveal>
+              <p className="eyebrow text-mint-300">Phone · Tablet · Desktop</p>
+              <h2 className="headline-xl mt-3 text-5xl uppercase sm:text-7xl"><span className="text-gold-500">Install</span><span className="block">the app</span></h2>
+              <span className="rule-red mt-5" aria-hidden />
+              <p className="mt-5 max-w-lg text-navy-100">Add PD FinPrep to your home screen for a full-screen app experience, offline access to recently opened pages and reminders for study sessions, exam countdowns and registration deadlines.</p>
+              <InstallAppButton className="mt-8" />
+            </Reveal>
+            <Reveal delay={120} className="grid gap-4 sm:grid-cols-2">
+              {[
+                [Smartphone, "Works like an app", "Installs from the browser on Android, iPhone, Windows and macOS — no app store needed."],
+                [BellRing, "Smart reminders", "Today's plan, due flashcards, exam countdown and registration deadlines."],
+                [BookOpen, "Learn offline", "Download PDF notes and formula sheets for your commute."],
+                [ShieldCheck, "Built with integrity", "Original questions only. Official past papers linked at the source."],
+              ].map(([Icon, t, d]) => {
+                const I = Icon as typeof Smartphone;
+                return (
+                  <div key={t as string} className="glass-dark tilt-hover rounded-2xl p-5">
+                    <I className="h-5 w-5 text-gold-500" aria-hidden />
+                    <p className="font-display mt-3 text-lg font-bold">{t as string}</p>
+                    <p className="mt-1 text-sm text-navy-100">{d as string}</p>
+                  </div>
+                );
+              })}
+            </Reveal>
+          </div>
+        </section>
+
         {/* How it works */}
         <section className="bg-white">
-          <div className="mx-auto max-w-6xl px-4 py-20 sm:px-6">
-            <Reveal className="text-center">
-              <p className="text-sm font-semibold uppercase tracking-widest text-gold-600">How it works</p>
-              <h2 className="text-gradient-navy mt-2 text-3xl font-bold sm:text-4xl">A complete preparation cycle</h2>
+          <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6">
+            <Reveal>
+              <p className="eyebrow text-gold-600">How it works</p>
+              <h2 className="headline-xl mt-3 text-4xl uppercase text-navy-950 sm:text-6xl">The <span className="text-gold-500">Cycle</span></h2>
             </Reveal>
-            <ol className="relative mt-12 grid gap-4 sm:grid-cols-3">
+            <ol className="mt-12 grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
               {CYCLE.map((c, i) => (
                 <Reveal as="li" key={c.t} delay={(i % 3) * 100}>
-                  <div className="card-hover group relative h-full overflow-hidden rounded-2xl border border-slate-200 bg-gradient-to-br from-white to-slate-50 p-5">
-                    <span className="absolute -right-3 -top-5 text-7xl font-black text-navy-900/5 transition-colors group-hover:text-gold-500/15">{i + 1}</span>
-                    <span className="bg-gradient-gold grid h-8 w-8 place-items-center rounded-full text-sm font-bold text-navy-950 shadow-md shadow-gold-500/30">{i + 1}</span>
-                    <p className="mt-3 font-semibold text-navy-900">{c.t}</p>
-                    <p className="text-sm text-slate-600">{c.d}</p>
+                  <div className="group flex gap-5">
+                    <span className="font-display text-5xl font-black leading-none text-slate-200 transition-colors group-hover:text-gold-500">{String(i + 1).padStart(2, "0")}</span>
+                    <div className="border-t border-navy-950/15 pt-3">
+                      <p className="font-display text-xl font-bold text-navy-950">{c.t}</p>
+                      <p className="text-sm text-slate-600">{c.d}</p>
+                    </div>
                   </div>
                 </Reveal>
               ))}
@@ -193,14 +222,16 @@ export default async function LandingPage() {
         </section>
 
         {/* CTA */}
-        <section className="bg-gradient-navy relative overflow-hidden">
-          <div className="aurora" aria-hidden />
-          <Reveal className="relative mx-auto max-w-4xl px-4 py-20 text-center sm:px-6">
-            <h2 className="text-3xl font-bold text-white sm:text-4xl">Start with a free diagnostic today</h2>
-            <p className="mx-auto mt-4 max-w-xl text-navy-100">Choose your exam, tell us your schedule, and get a personalised plan in minutes.</p>
-            <div className="mt-8 flex flex-wrap justify-center gap-3">
-              <Link href="/register" className="btn-shine bg-gradient-gold pulse-ring inline-flex items-center gap-2 rounded-xl px-7 py-3 font-semibold text-navy-950 shadow-xl shadow-gold-500/30 transition hover:-translate-y-0.5">Create free account <ArrowRight className="h-4 w-4" aria-hidden /></Link>
-              <Link href="/catalog" className="inline-flex items-center rounded-xl border border-white/20 px-7 py-3 font-semibold text-white transition hover:bg-white/10">See supported exams</Link>
+        <section className="bg-ink relative overflow-hidden">
+          <span className="red-beam left-[45%]" aria-hidden />
+          <span className="floor-glow" aria-hidden />
+          <Reveal className="relative mx-auto max-w-5xl px-4 py-24 text-center sm:px-6">
+            <p className="eyebrow text-mint-300">Free diagnostic</p>
+            <h2 className="headline-xl mt-4 text-5xl uppercase text-white sm:text-7xl">Start <span className="text-gold-500">Today</span></h2>
+            <p className="mx-auto mt-5 max-w-xl text-navy-100">Choose your exam, tell us your schedule and get a personalised plan in minutes. No payment details. We never promise a pass — we show you the evidence.</p>
+            <div className="mt-9 flex flex-wrap justify-center gap-4">
+              <Link href="/register" className="btn-shine inline-flex items-center gap-2 rounded-full bg-gold-500 px-7 py-3.5 text-[0.72rem] font-semibold uppercase tracking-[0.28em] text-white shadow-xl shadow-gold-500/30 transition hover:-translate-y-0.5 hover:bg-gold-600">Create free account <ArrowRight className="h-4 w-4" aria-hidden /></Link>
+              <Link href="/catalog" className="pill-outline">See supported exams</Link>
             </div>
           </Reveal>
         </section>

@@ -51,14 +51,16 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
 
   return (
     <>
-      <section className="bg-gradient-navy animate-fade-up relative mb-6 overflow-hidden rounded-3xl p-6 text-white shadow-xl shadow-navy-900/20 sm:p-8">
-        <div className="aurora" aria-hidden />
-        <div className="bg-grid-dark absolute inset-0" aria-hidden />
+      <section className="bg-ink on-dark animate-fade-up relative mb-6 overflow-hidden rounded-3xl p-6 text-white shadow-xl shadow-black/25 sm:p-9">
+        <span className="red-beam left-[58%]" aria-hidden />
+        <span className="floor-glow" aria-hidden />
+        <div className="bg-grid-dark absolute inset-0 opacity-60" aria-hidden />
         <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="text-sm font-medium text-gold-300">{enrollment.program.shortName} · {enrollment.level.name}</p>
-            <h1 className="mt-1 text-3xl font-bold tracking-tight sm:text-4xl">Welcome back, <span className="text-gradient-gold">{user.name.split(" ")[0]}</span></h1>
-            <p className="mt-2 max-w-xl text-sm text-navy-100">Readiness: <strong className="text-white">{analytics.readiness.label}</strong> — {analytics.readiness.description}</p>
+            <p className="eyebrow text-mint-300">{enrollment.program.shortName} · {enrollment.level.name} <span className="text-white/40">/</span> Your preparation</p>
+            <h1 className="headline-xl mt-3 text-4xl uppercase sm:text-6xl"><span className="text-gold-500">Welcome</span> <span className="block text-white">back, {user.name.split(" ")[0]}</span></h1>
+            <span className="rule-red mt-4" aria-hidden />
+            <p className="mt-3 max-w-xl text-sm text-navy-100">Readiness: <strong className="text-white">{analytics.readiness.label}</strong> — {analytics.readiness.description}</p>
             <div className="mt-5 flex flex-wrap gap-2">
               <StartAttemptButton fields={{ syllabusVersionId: sv, enrollmentId: enrollment.id, kind: "PRACTICE", count: 10 }} variant="gold" size="md">Quick practice (10 Q)</StartAttemptButton>
               <LinkButton href="/plan" variant="secondary">Full plan</LinkButton>
@@ -66,15 +68,15 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           </div>
           <div className="grid grid-cols-3 gap-3 text-center">
             <div className="glass-dark rounded-2xl px-4 py-3">
-              <p className="text-3xl font-black text-gold-300">{daysLeft ?? "—"}</p>
+              <p className="font-display text-4xl font-black text-gold-500">{daysLeft ?? "—"}</p>
               <p className="text-[11px] uppercase tracking-wider text-navy-200">days to exam</p>
             </div>
             <div className="glass-dark rounded-2xl px-4 py-3">
-              <p className="text-3xl font-black text-white">{Math.round((analytics.overall.coverage ?? 0) * 100)}%</p>
+              <p className="font-display text-4xl font-black text-white">{Math.round((analytics.overall.coverage ?? 0) * 100)}%</p>
               <p className="text-[11px] uppercase tracking-wider text-navy-200">coverage</p>
             </div>
             <div className="glass-dark rounded-2xl px-4 py-3">
-              <p className="text-3xl font-black text-white">{user.gamificationEnabled ? streak : todayTasks.length}</p>
+              <p className="font-display text-4xl font-black text-white">{user.gamificationEnabled ? streak : todayTasks.length}</p>
               <p className="text-[11px] uppercase tracking-wider text-navy-200">{user.gamificationEnabled ? "day streak" : "tasks today"}</p>
             </div>
           </div>

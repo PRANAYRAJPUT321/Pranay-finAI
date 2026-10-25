@@ -9,4 +9,7 @@ export const env = {
   resendApiKey: process.env.RESEND_API_KEY ?? "",
   emailFrom: process.env.EMAIL_FROM ?? "PD FinPrep <no-reply@example.com>",
   tutorHourlyLimit: Number(process.env.AI_TUTOR_HOURLY_LIMIT ?? 30),
+  vapidPublicKey: process.env.VAPID_PUBLIC_KEY ?? "",
+  vapidPrivateKey: process.env.VAPID_PRIVATE_KEY ?? "",
+  vapidSubject: process.env.VAPID_SUBJECT ?? "mailto:admin@example.com",
 };

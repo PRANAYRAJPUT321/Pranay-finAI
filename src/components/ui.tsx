@@ -7,11 +7,11 @@ export { clsx as cx };
 
 type Variant = "primary" | "secondary" | "ghost" | "danger" | "gold";
 const variants: Record<Variant, string> = {
-  primary: "btn-shine bg-gradient-to-br from-navy-800 to-navy-950 text-white shadow-md shadow-navy-900/20 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-navy-900/30 disabled:from-navy-300 disabled:to-navy-300 disabled:shadow-none disabled:translate-y-0",
-  secondary: "bg-white/90 text-navy-900 border border-navy-200 shadow-sm hover:-translate-y-0.5 hover:border-gold-400 hover:shadow-md disabled:text-navy-300 disabled:translate-y-0",
+  primary: "btn-primary btn-shine bg-gradient-to-br from-navy-800 to-navy-950 text-white shadow-md shadow-navy-900/20 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-navy-900/30 disabled:from-navy-300 disabled:to-navy-300 disabled:shadow-none disabled:translate-y-0",
+  secondary: "btn-secondary bg-white/90 text-navy-900 border border-navy-200 shadow-sm hover:-translate-y-0.5 hover:border-gold-400 hover:shadow-md disabled:text-navy-300 disabled:translate-y-0",
   ghost: "text-navy-700 hover:bg-navy-50",
   danger: "btn-shine bg-red-700 text-white hover:bg-red-800 disabled:bg-red-300",
-  gold: "btn-shine bg-gradient-to-br from-gold-300 via-gold-500 to-gold-600 text-navy-950 shadow-md shadow-gold-500/30 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-gold-500/40 disabled:from-gold-200 disabled:to-gold-200 disabled:translate-y-0",
+  gold: "btn-shine bg-gradient-to-br from-gold-300 via-gold-500 to-gold-600 text-white shadow-md shadow-gold-500/30 hover:-translate-y-0.5 hover:shadow-lg hover:shadow-gold-500/40 disabled:from-gold-200 disabled:to-gold-200 disabled:translate-y-0",
 };
 const sizes = { sm: "px-2.5 py-1.5 text-sm", md: "px-4 py-2 text-sm", lg: "px-5 py-2.5 text-base" };
 
@@ -39,7 +39,7 @@ export function Card({ className, children, ...props }: ComponentProps<"section"
 export function CardTitle({ children, action, className }: { children: ReactNode; action?: ReactNode; className?: string }) {
   return (
     <div className={clsx("mb-3 flex items-start justify-between gap-3", className)}>
-      <h2 className="flex items-center gap-2 text-base font-semibold text-navy-900"><span aria-hidden className="h-4 w-1 rounded-full bg-gradient-to-b from-gold-400 to-gold-600" />{children}</h2>
+      <h2 className="font-display flex items-center gap-2 text-lg font-bold text-navy-900"><span aria-hidden className="h-5 w-1 rounded-full bg-gold-500" />{children}</h2>
       {action}
     </div>
   );
@@ -64,14 +64,28 @@ export function Badge({ tone = "slate", children, className, title }: { tone?: T
   );
 }
 
-export function PageHeader({ title, description, actions }: { title: string; description?: ReactNode; actions?: ReactNode }) {
+/** Dark editorial banner used at the top of every page (green-black, red display type, white). */
+export function PageHeader({ title, description, actions, eyebrow }: { title: string; description?: ReactNode; actions?: ReactNode; eyebrow?: string }) {
+  const words = title.split(" ");
+  const first = words.length > 1 ? words.slice(0, Math.ceil(words.length / 2)).join(" ") : title;
+  const rest = words.length > 1 ? words.slice(Math.ceil(words.length / 2)).join(" ") : "";
   return (
-    <div className="animate-fade-up mb-6 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-      <div>
-        <h1 className="text-gradient-navy text-2xl font-bold tracking-tight sm:text-3xl">{title}</h1>
-        {description && <p className="mt-1 max-w-3xl text-sm text-slate-600">{description}</p>}
+    <div className="bg-ink on-dark animate-fade-up relative mb-6 overflow-hidden rounded-3xl px-6 py-7 text-white shadow-xl shadow-black/20 sm:px-8 sm:py-9">
+      <span aria-hidden className="red-beam left-[62%]" />
+      <span aria-hidden className="floor-glow" />
+      <div aria-hidden className="bg-grid-dark absolute inset-0 opacity-60" />
+      <div className="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
+        <div className="min-w-0">
+          <p className="eyebrow text-mint-300">{eyebrow ?? "PD FinPrep"}</p>
+          <h1 className="headline-xl mt-3 text-4xl uppercase sm:text-5xl" aria-label={title}>
+            <span className="text-gold-500">{first}</span>
+            {rest && <span className="block text-white">{rest}</span>}
+          </h1>
+          <span aria-hidden className="rule-red mt-4" />
+          {description && <div className="mt-3 max-w-3xl text-sm leading-relaxed text-navy-100">{description}</div>}
+        </div>
+        {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
       </div>
-      {actions && <div className="flex flex-wrap gap-2">{actions}</div>}
     </div>
   );
 }

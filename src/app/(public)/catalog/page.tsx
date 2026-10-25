@@ -34,7 +34,7 @@ export default async function CatalogPage() {
                     <p className="font-semibold text-navy-900">{p.name}</p>
                     <p className="text-sm text-slate-600">{p.awardingBody} · {p.country}</p>
                   </div>
-                  <span className="bg-gradient-gold rounded-lg px-2 py-1 text-xs font-bold text-navy-950 shadow-sm transition-transform group-hover:scale-110">{p.shortName}</span>
+                  <span className="bg-gradient-gold rounded-lg px-2 py-1 text-xs font-bold text-white shadow-sm transition-transform group-hover:scale-110">{p.shortName}</span>
                 </div>
                 <ul className="mt-3 space-y-1">
                   {p.levels.map((l) => {
