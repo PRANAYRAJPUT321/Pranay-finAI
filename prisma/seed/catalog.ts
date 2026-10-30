@@ -358,7 +358,7 @@ export const programs: ProgramSeed[] = [
     licensingNote: "PD FinPrep is not affiliated with IMA.",
     levels: [
       { code: "P1", name: "Part 1: Financial Planning, Performance, and Analytics", order: 1, syllabus: structureOnly(["External financial reporting decisions", "Planning, budgeting and forecasting", "Performance management", "Cost management", "Internal controls", "Technology and analytics"], "https://www.imanet.org") },
-      { code: "P2", name: "Part 2: Strategic Financial Management", order: 2 },
+      { code: "P2", name: "Part 2: Strategic Financial Management", order: 2, syllabus: structureOnly(["Financial statement analysis", "Corporate finance", "Decision analysis", "Risk management", "Investment decisions", "Professional ethics"], "https://www.imanet.org") },
     ],
   },
   {

@@ -95,6 +95,32 @@ describe("accounting and tax", () => {
   });
 });
 
+describe("interest, cost accounting, economics and alternatives", () => {
+  it("simple interest and annuity-due future value", () => {
+    expect(r(F.simpleInterest(50000, 0.08, 3))).toBe(12000);
+    // 12 monthly SIP payments of 5,000 at 1% a month, paid at the start of each month.
+    expect(r(F.futureValueAnnuityDue(5000, 0.01, 12))).toBe(64046.64);
+  });
+  it("break-even and contribution margin", () => {
+    expect(r(F.breakEvenUnits(120000, 50, 30))).toBe(6000);
+    expect(r(F.contributionMarginRatio(50, 30), 4)).toBe(0.4);
+    expect(() => F.breakEvenUnits(1000, 10, 12)).toThrow();
+  });
+  it("arc elasticity is signed and uses midpoints", () => {
+    expect(r(F.arcElasticity(100, 80, 10, 12), 4)).toBe(-1.2222);
+  });
+  it("inventory turnover uses average inventory", () => {
+    expect(r(F.inventoryTurnover(600000, 90000, 110000), 2)).toBe(6);
+  });
+  it("hedge fund net returns under soft and hard hurdles", () => {
+    expect(r(F.hedgeFundNetReturn(0.15, 0.02, 0.2), 4)).toBe(0.104);
+    expect(r(F.hedgeFundNetReturn(0.15, 0.02, 0.2, 0.05, 0), 4)).toBe(0.104);
+    expect(r(F.hedgeFundNetReturn(0.15, 0.02, 0.2, 0.05, 1), 4)).toBe(0.114);
+    // Below the hurdle no incentive fee is charged.
+    expect(r(F.hedgeFundNetReturn(0.06, 0.02, 0.2, 0.05, 0), 4)).toBe(0.04);
+  });
+});
+
 describe("calculator registry", () => {
   it("every calculator runs on its documented example inputs", () => {
     for (const c of calculators) {

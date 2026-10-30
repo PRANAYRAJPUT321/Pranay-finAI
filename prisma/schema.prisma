@@ -52,7 +52,7 @@ model User {
   attempts          Attempt[]
   proficiencies     TopicProficiency[]
   lessonProgress    LessonProgress[]
-  flashcards        Flashcard[]        @relation("FlashcardOwner")
+  flashcards        Flashcard[]           @relation("FlashcardOwner")
   cardStates        CardState[]
   reviewLogs        ReviewLog[]
   questionReviews   QuestionReviewState[]
@@ -60,13 +60,15 @@ model User {
   notes             Note[]
   studyLogs         StudyLog[]
   tutorSessions     TutorSession[]
-  reports           ContentReport[]    @relation("ReportAuthor")
-  resolvedReports   ContentReport[]    @relation("ReportResolver")
+  reports           ContentReport[]       @relation("ReportAuthor")
+  resolvedReports   ContentReport[]       @relation("ReportResolver")
   notifications     Notification[]
   achievements      Achievement[]
   auditLogs         AuditLog[]
   groupMemberships  StudyGroupMember[]
   pushSubscriptions PushSubscription[]
+  dailyChallenges   DailyChallenge[]
+  rapidFireRuns     RapidFireRun[]
   ownedGroups       StudyGroup[]
   entitlements      Entitlement[]
   questionVersions  QuestionVersion[]
@@ -185,8 +187,8 @@ model ContentSource {
 }
 
 model ExamProgram {
-  id            String             @id @default(cuid())
-  slug          String             @unique
+  id            String       @id @default(cuid())
+  slug          String       @unique
   name          String
   shortName     String
   awardingBody  String
@@ -196,9 +198,9 @@ model ExamProgram {
   description   String
   officialUrl   String?
   licensingNote String?
-  isActive      Boolean            @default(true)
-  createdAt     DateTime           @default(now())
-  updatedAt     DateTime           @updatedAt
+  isActive      Boolean      @default(true)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
   levels        ExamLevel[]
   enrollments   Enrollment[]
   pastPapers    PastPaper[]
@@ -265,7 +267,7 @@ model ExamWindow {
 }
 
 model Topic {
-  id                String            @id @default(cuid())
+  id                String              @id @default(cuid())
   syllabusVersionId String
   parentId          String?
   code              String
@@ -273,11 +275,11 @@ model Topic {
   order             Int
   weightMin         Float? // official weighting range in percent, where published
   weightMax         Float?
-  difficulty        Int               @default(2) // 1 easy .. 3 hard (editorial estimate)
+  difficulty        Int                 @default(2) // 1 easy .. 3 hard (editorial estimate)
   description       String?
-  syllabus          SyllabusVersion   @relation(fields: [syllabusVersionId], references: [id], onDelete: Cascade)
-  parent            Topic?            @relation("TopicTree", fields: [parentId], references: [id], onDelete: Cascade)
-  children          Topic[]           @relation("TopicTree")
+  syllabus          SyllabusVersion     @relation(fields: [syllabusVersionId], references: [id], onDelete: Cascade)
+  parent            Topic?              @relation("TopicTree", fields: [parentId], references: [id], onDelete: Cascade)
+  children          Topic[]             @relation("TopicTree")
   outcomes          LearningOutcome[]
   prerequisites     TopicPrerequisite[] @relation("TopicPrereqOf")
   dependents        TopicPrerequisite[] @relation("TopicPrereq")
@@ -330,23 +332,23 @@ enum ContentOrigin {
 }
 
 model Lesson {
-  id               String         @id @default(cuid())
+  id               String           @id @default(cuid())
   topicId          String
   slug             String
   title            String
   // Structured sections, validated by src/server/content/lesson-schema.ts
   content          Json
-  estimatedMinutes Int            @default(30)
-  status           ContentStatus  @default(DRAFT)
-  origin           ContentOrigin  @default(ORIGINAL)
+  estimatedMinutes Int              @default(30)
+  status           ContentStatus    @default(DRAFT)
+  origin           ContentOrigin    @default(ORIGINAL)
   sourceId         String?
-  version          Int            @default(1)
+  version          Int              @default(1)
   reviewedById     String?
   reviewedAt       DateTime?
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
-  topic            Topic          @relation(fields: [topicId], references: [id], onDelete: Cascade)
-  source           ContentSource? @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  topic            Topic            @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  source           ContentSource?   @relation(fields: [sourceId], references: [id], onDelete: SetNull)
   progress         LessonProgress[]
   bookmarks        Bookmark[]
   notes            Note[]
@@ -356,8 +358,8 @@ model Lesson {
 }
 
 model Formula {
-  id                 String         @id @default(cuid())
-  slug               String         @unique
+  id                 String          @id @default(cuid())
+  slug               String          @unique
   name               String
   category           String // e.g. "Time value of money"
   expression         String
@@ -369,8 +371,8 @@ model Formula {
   calculatorKey      String? // deterministic calculator in src/lib/finance
   calculatorGuidance String?
   appliesTo          String? // exams/jurisdictions the convention applies to
-  createdAt          DateTime       @default(now())
-  updatedAt          DateTime       @updatedAt
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
   topics             FormulaTopic[]
   questions          Question[]
   bookmarks          Bookmark[]
@@ -411,8 +413,8 @@ model ItemSet {
 }
 
 model Question {
-  id                String          @id @default(cuid())
-  externalKey       String?         @unique // stable key for imports/seeds
+  id                String                @id @default(cuid())
+  externalKey       String?               @unique // stable key for imports/seeds
   syllabusVersionId String
   topicId           String
   learningOutcomeId String?
@@ -433,28 +435,29 @@ model Question {
   steps             String[]
   conceptTested     String
   commonMistake     String?
-  estimatedSeconds  Int             @default(90)
+  estimatedSeconds  Int                   @default(90)
   context           String? // jurisdiction / standard / tax year where answer depends on it
-  status            ContentStatus   @default(DRAFT)
-  origin            ContentOrigin   @default(ORIGINAL)
+  status            ContentStatus         @default(DRAFT)
+  origin            ContentOrigin         @default(ORIGINAL)
   sourceId          String?
-  version           Int             @default(1)
+  version           Int                   @default(1)
   reviewedById      String?
   reviewedAt        DateTime?
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
-  syllabus          SyllabusVersion @relation(fields: [syllabusVersionId], references: [id], onDelete: Cascade)
-  topic             Topic           @relation(fields: [topicId], references: [id], onDelete: Cascade)
-  outcome           LearningOutcome? @relation(fields: [learningOutcomeId], references: [id], onDelete: SetNull)
-  itemSet           ItemSet?        @relation(fields: [itemSetId], references: [id], onDelete: SetNull)
-  formula           Formula?        @relation(fields: [formulaId], references: [id], onDelete: SetNull)
-  source            ContentSource?  @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+  createdAt         DateTime              @default(now())
+  updatedAt         DateTime              @updatedAt
+  syllabus          SyllabusVersion       @relation(fields: [syllabusVersionId], references: [id], onDelete: Cascade)
+  topic             Topic                 @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  outcome           LearningOutcome?      @relation(fields: [learningOutcomeId], references: [id], onDelete: SetNull)
+  itemSet           ItemSet?              @relation(fields: [itemSetId], references: [id], onDelete: SetNull)
+  formula           Formula?              @relation(fields: [formulaId], references: [id], onDelete: SetNull)
+  source            ContentSource?        @relation(fields: [sourceId], references: [id], onDelete: SetNull)
   versions          QuestionVersion[]
   attemptItems      AttemptItem[]
   bookmarks         Bookmark[]
   reports           ContentReport[]
   reviewStates      QuestionReviewState[]
   flashcards        Flashcard[]
+  dailyChallenges   DailyChallenge[]
 
   @@index([syllabusVersionId, topicId, status])
 }
@@ -632,18 +635,18 @@ model LessonProgress {
 }
 
 model StudyPlan {
-  id          String      @id @default(cuid())
+  id           String      @id @default(cuid())
   enrollmentId String
-  startDate   DateTime
-  examDate    DateTime
-  weeklyHours Float
-  status      String      @default("active") // active | superseded
-  warnings    Json?
-  summary     Json?
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  enrollment  Enrollment  @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
-  tasks       StudyTask[]
+  startDate    DateTime
+  examDate     DateTime
+  weeklyHours  Float
+  status       String      @default("active") // active | superseded
+  warnings     Json?
+  summary      Json?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  enrollment   Enrollment  @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  tasks        StudyTask[]
 
   @@index([enrollmentId, status])
 }
@@ -923,12 +926,12 @@ model StudyGroup {
 }
 
 model StudyGroupMember {
-  groupId      String
-  userId       String
+  groupId       String
+  userId        String
   shareProgress Boolean    @default(true)
-  joinedAt     DateTime   @default(now())
-  group        StudyGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  user         User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  joinedAt      DateTime   @default(now())
+  group         StudyGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  user          User       @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@id([groupId, userId])
 }
@@ -973,4 +976,34 @@ model PushSubscription {
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+/// One question per learner per day; answered once.
+model DailyChallenge {
+  id               String    @id @default(cuid())
+  userId           String
+  date             DateTime  @db.Date
+  questionId       String
+  selectedOptionId String?
+  correct          Boolean?
+  answeredAt       DateTime?
+  createdAt        DateTime  @default(now())
+  user             User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  question         Question  @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+}
+
+/// A completed 60-second rapid-fire round.
+model RapidFireRun {
+  id                String   @id @default(cuid())
+  userId            String
+  syllabusVersionId String
+  answered          Int
+  correct           Int
+  score             Int
+  createdAt         DateTime @default(now())
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
 }

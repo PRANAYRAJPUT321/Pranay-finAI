@@ -11,6 +11,9 @@ import { examInfo } from "./seed/exam-info";
 import { examInfoSchema } from "../src/server/catalog/exam-info";
 import { cfaL1 } from "./seed/cfa-l1";
 import { cpaFar, frmP1, nismVA } from "./seed/other-curricula";
+import { cpaAud, cpaFarMore, frmP1More, nismVAMore } from "./seed/content-frm-cpa-nism";
+import { accaFr, caFoundation, cmaP1, cmaP2 } from "./seed/content-acca-cma-ca";
+import { caiaL1, cfpExam } from "./seed/content-cfp-caia";
 import type { CurriculumSeed } from "./seed/types";
 import { examStructureSchema } from "../src/server/catalog/structure";
 import { lessonContentSchema } from "../src/server/content/lesson-schema";
@@ -212,6 +215,11 @@ async function seedPastPapers() {
     { program: "nism", level: "VA", title: "NISM workbook and exam details", kind: "OFFICIAL_SAMPLE", url: "https://www.nism.ac.in", note: "Official workbook and exam information. Linked only." },
     { program: "cfa", level: "L1", title: "PD FinPrep original full-length mock (unofficial)", kind: "ORIGINAL_MOCK", url: "/mocks", note: "Original PD FinPrep questions in the exam's format. Not an official or past exam paper." },
     { program: "frm", level: "PART1", title: "PD FinPrep original mock (unofficial)", kind: "ORIGINAL_MOCK", url: "/mocks", note: "Original PD FinPrep questions. Not an official or past exam paper." },
+    { program: "cma-us", level: "P1", title: "IMA CMA exam resources and sample questions", kind: "OFFICIAL_SAMPLE", url: "https://www.imanet.org", note: "IMA publishes the content specification and sample items. Linked only." },
+    { program: "cfp", level: "EXAM", title: "CFP Board exam resources and practice", kind: "OFFICIAL_SAMPLE", url: "https://www.cfp.net", note: "CFP Board publishes exam information and practice resources. Linked only." },
+    { program: "caia", level: "L1", title: "CAIA Level I curriculum and study guide", kind: "OFFICIAL_SAMPLE", url: "https://caia.org", note: "Candidate study materials from the CAIA Association. Linked only." },
+    { program: "ca-india", level: "FND", title: "ICAI mock test papers (Board of Studies)", kind: "OFFICIAL_SAMPLE", url: "https://www.icai.org", note: "ICAI publishes mock test papers before each attempt. Linked only." },
+    { program: "nism", level: "VA", title: "PD FinPrep original practice set (unofficial)", kind: "ORIGINAL_MOCK", url: "/practice", note: "Original PD FinPrep questions. Not an official NISM paper." },
   ];
   for (const e of entries) {
     const program = await prisma.examProgram.findUniqueOrThrow({ where: { slug: e.program } });
@@ -279,7 +287,8 @@ async function main() {
   const admin = await seedUsers();
   await seedFormulas();
   let questions = 0;
-  for (const c of [cfaL1, frmP1, cpaFar, nismVA]) questions += await seedCurriculum(c, source.id, admin?.id ?? null);
+  const curricula = [cfaL1, frmP1, cpaFar, nismVA, frmP1More, cpaFarMore, cpaAud, nismVAMore, accaFr, cmaP1, cmaP2, caFoundation, cfpExam, caiaL1];
+  for (const c of curricula) questions += await seedCurriculum(c, source.id, admin?.id ?? null);
   await seedPastPapers();
   const infoCount = await seedExamInfo();
   console.log(`Exam facts loaded for ${infoCount} levels (as of 2026-10-24, unverified).`);

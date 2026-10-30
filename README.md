@@ -21,7 +21,7 @@ Requirements: Node.js 20.9+, PostgreSQL 14+.
 cp .env.example .env            # set DATABASE_URL
 npm install                     # also runs prisma generate
 npx prisma migrate deploy       # create tables
-npm run db:seed                 # demo catalog, lessons, 88 verified questions
+npm run db:seed                 # catalog, 43 lessons, 194 verified questions, 30 formulas
 npm run dev                     # http://localhost:3000
 ```
 
@@ -53,7 +53,7 @@ Architecture: see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 - **Configurable exam catalog** — programs, levels, versioned syllabi (status, effective dates, verification status and date, source links), topic weightings, prerequisites, learning outcomes, exam structure (sections, timing, formats, scoring notes, calculator policy). All seeded structures are marked *unverified* until an admin checks them.
 - **Onboarding** — multiple certifications per learner, exam date or window, availability, background, preferred format, self-assessed confident/difficult topics, diagnostic test.
 - **Study plan** — day-by-day schedule from time remaining, weights, difficulty, proficiency and prerequisites; spaced reviews at +1/+7/+21 days; reserved final revision with mocks; daily/weekly/monthly views; mark done with logged time, skip, reschedule, missed-session recovery, workload warnings.
-- **Lessons** — 14 structured lessons (objectives, prerequisites, three explanation levels, formal definition, worked examples, formulas, applications, exam patterns, misconceptions, summary, knowledge check, references, tables, journal entries, interactive calculators), bookmarks, notes, revision notebook.
+- **Lessons** — 43 structured lessons across 11 exam levels (objectives, prerequisites, three explanation levels, formal definition, worked examples, formulas, applications, exam patterns, misconceptions, summary, knowledge check, references, tables, journal entries, interactive calculators), bookmarks, notes, revision notebook.
 - **Question bank & assessment engine** — MCQ, multiple-select, numeric, written (indicative rubric), item sets; seeded randomisation, weight-proportional selection, no duplicates, item sets kept together, per-question option shuffling; timed/untimed, immediate or end feedback, flagging, confidence, autosave, pause/resume, server-authoritative timers, sectioned mocks with closed sections and auto-submit; detailed explanations with distractor rationales; similar-question practice; error categorisation.
 - **Deterministic finance library** — TVM, NPV/IRR, bonds (price, YTM, durations, convexity), Gordon growth, CAPM, WACC, ratios, portfolio risk, Sharpe, statistics, parametric VaR, forwards, put-call parity, depreciation, progressive tax (caller-supplied brackets) — used for answer-key verification, formula calculators and AI tools.
 - **Adaptive engine** — transparent proficiency heuristic, mastery requiring minimum evidence, recommendations in the documented priority order, SM-2-style spaced repetition for flashcards and questions.
@@ -70,6 +70,11 @@ Architecture: see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 - **Notifications** — header bell with live polling, browser notifications, optional web push (VAPID) to installed devices; reminders for today's plan, due flashcards, exam countdown (60/30/14/7/3/1 days) and registration deadlines, each created once and switchable off.
 - **Installable app (PWA)** — manifest, service worker with offline fallback, install button and QR code on `/get-app`, iOS/Android/desktop instructions.
 - **Navigation** — grouped sidebar, Ctrl/⌘+K quick search, phone bottom tab bar with a full-screen menu; editorial green/black/white/red design.
+- **Daily challenge** — one exam-style question per day, chosen from questions the learner has not seen, answered once, with a daily streak and a 14-day history; shown on the dashboard.
+- **Rapid Fire** — a 60-second game-style sprint of short questions, graded server-side (answers never reach the browser before you answer), +10/−3 scoring, private best scores, review of misses.
+- **Focus timer** — Pomodoro sessions (25/5, 50/10, 15/3) with a progress ring, chime and notifications; completed sessions are logged as study time.
+- **Glossary** — 149 plain-English terms with formulas, filterable by exam and category, A–Z jump links and one-tap "add to flashcards".
+- **Calendar export** — `/api/calendar` downloads an .ics file with upcoming plan tasks, target exam dates, exam windows and registration deadlines.
 - **Admin console** — question CRUD with versioning and review workflow, publishing gated by schema + answer-key checks, answer-key correction with automatic re-grading, CSV/JSON import with row-level validation, lesson editing, syllabus verification/cloning/versioning, topic weights, past-paper resources, content reports, user roles and manual tier grants, audit log, aggregated analytics.
 
 ## Integrations requiring credentials
@@ -84,7 +89,7 @@ Architecture: see [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 
 ## Known limitations and next steps
 
-- Demo content depth: CFA Level I (62 questions, 11 lessons), FRM Part I, CPA FAR and NISM V-A samples; other programs are structure-only.
+- Content depth: CFA Level I (61 questions, 11 lessons); FRM Part I (29, 5); CPA FAR (14, 4) and AUD (8, 2); NISM V-A (16, 3); ACCA FR (11, 3); CMA Part 1 (11, 3) and Part 2 (8, 2); CA Foundation (13, 4); CFP (12, 3); CAIA Level I (11, 3). CFA Levels II/III, FRM Part II, CPA REG and EA are structure-only.
 - Seeded exam structures and weights are unverified until checked by an administrator against official sources.
 - Written-response grading is keyword-based and indicative only.
 - Proficiency, readiness bands and SRS intervals are rule-based heuristics that have not been statistically validated.

@@ -21,7 +21,7 @@ test("landing, catalog and app pages fit a phone screen", async ({ page }) => {
     await page.goto(path);
     await noHorizontalScroll(page);
   }
-  for (const path of ["/guide", "/materials", "/videos", "/get-app"]) {
+  for (const path of ["/guide", "/materials", "/videos", "/get-app", "/glossary", "/daily", "/rapid-fire", "/focus"]) {
     await page.goto(path);
     await noHorizontalScroll(page);
   }

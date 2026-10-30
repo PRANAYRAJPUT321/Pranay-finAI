@@ -1,7 +1,9 @@
 import Link from "next/link";
-import { ArrowRight, Flame } from "lucide-react";
+import { ArrowRight, BookA, CalendarPlus, Flame, Hourglass, Zap } from "lucide-react";
 import { AccuracyTrend } from "@/components/charts";
 import { StartAttemptButton } from "@/components/start-attempt";
+import { DailyChallengeCard } from "@/components/daily-challenge";
+import { dailyChallengeStats, getDailyChallenge } from "@/server/engagement/service";
 import { Alert, Badge, Card, CardTitle, EmptyState, LinkButton, MASTERY_TONE, PageHeader, Progress, Stat, fmtDate, fmtMinutes, pct } from "@/components/ui";
 import { requireUser } from "@/server/auth/current";
 import { prisma } from "@/server/db";
@@ -44,6 +46,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     prisma.lessonProgress.findFirst({ where: { userId: user.id, status: "in_progress" }, orderBy: { startedAt: "desc" }, include: { lesson: true } }),
     prisma.notification.findMany({ where: { userId: user.id, readAt: null }, orderBy: { createdAt: "desc" }, take: 3 }),
   ]);
+  const [daily, dailyStats] = await Promise.all([getDailyChallenge(user.id, enrollment.syllabusVersionId), dailyChallengeStats(user.id)]);
   const weeklyTarget = enrollment.hoursPerDay * enrollment.studyDaysPerWeek * 60;
   const weakest = analytics.topics.filter((t) => t.attempts > 0).sort((a, b) => a.estimate - b.estimate).slice(0, 4);
   const sv = enrollment.syllabusVersionId;
@@ -112,6 +115,28 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             </span>
           }
         />
+      </div>
+
+      <div className="mt-6 grid gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2">{daily ? <DailyChallengeCard initial={daily} streak={dailyStats.streak} compact /> : null}</div>
+        <Card>
+          <CardTitle>Quick tools</CardTitle>
+          <ul className="grid gap-2">
+            {[
+              { href: "/rapid-fire", icon: Zap, title: "Rapid Fire", text: "60-second question sprint" },
+              { href: "/focus", icon: Hourglass, title: "Focus Timer", text: "Pomodoro sessions, auto-logged" },
+              { href: "/glossary", icon: BookA, title: "Glossary", text: "Key terms and formulas" },
+              { href: "/api/calendar", icon: CalendarPlus, title: "Add to calendar", text: "Plan, exam dates and deadlines (.ics)" },
+            ].map(({ href, icon: Icon, title, text }) => (
+              <li key={href}>
+                <a href={href} className="group flex items-center gap-3 rounded-xl border border-slate-200 p-3 transition hover:-translate-y-0.5 hover:border-gold-400 hover:shadow-md">
+                  <span className="grid h-10 w-10 place-items-center rounded-xl bg-navy-950 text-gold-500 transition group-hover:scale-110"><Icon className="h-5 w-5" aria-hidden /></span>
+                  <span><span className="block text-sm font-semibold text-navy-950">{title}</span><span className="text-xs text-slate-500">{text}</span></span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        </Card>
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-3">

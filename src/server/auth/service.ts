@@ -134,6 +134,8 @@ export async function exportUserData(userId: string) {
       reports: true,
       notifications: true,
       achievements: true,
+      dailyChallenges: true,
+      rapidFireRuns: true,
     },
   });
   return { exportedAt: new Date().toISOString(), user };

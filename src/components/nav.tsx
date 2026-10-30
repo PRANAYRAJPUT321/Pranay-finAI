@@ -4,8 +4,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import clsx from "clsx";
 import {
-  BarChart3, Bell, BookOpen, Bot, CalendarDays, ClipboardCheck, Compass, FileDown, FileStack, FunctionSquare, GraduationCap, Layers,
-  LayoutDashboard, NotebookPen, PlayCircle, Settings, Shield, Smartphone, Timer, Users,
+  BarChart3, Bell, BookA, BookOpen, Bot, CalendarDays, ClipboardCheck, Compass, FileDown, FileStack, FunctionSquare, GraduationCap, Hourglass, Layers,
+  LayoutDashboard, NotebookPen, PlayCircle, Settings, Shield, Smartphone, Sparkles, Timer, Users, Zap,
 } from "lucide-react";
 
 export const NAV_GROUPS = [
@@ -27,12 +27,16 @@ export const NAV_GROUPS = [
       { href: "/materials", label: "Study Materials", icon: FileDown },
       { href: "/formulas", label: "Formula Library", icon: FunctionSquare },
       { href: "/flashcards", label: "Flashcards", icon: Layers },
+      { href: "/glossary", label: "Glossary", icon: BookA },
+      { href: "/focus", label: "Focus Timer", icon: Hourglass },
     ],
   },
   {
     label: "Practice",
     items: [
+      { href: "/daily", label: "Daily Challenge", icon: Sparkles },
       { href: "/practice", label: "Practice", icon: ClipboardCheck },
+      { href: "/rapid-fire", label: "Rapid Fire", icon: Zap },
       { href: "/mocks", label: "Mock Exams", icon: Timer },
       { href: "/past-papers", label: "Past Papers", icon: FileStack },
       { href: "/tutor", label: "AI Tutor", icon: Bot },

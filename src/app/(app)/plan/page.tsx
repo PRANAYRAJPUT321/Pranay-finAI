@@ -73,6 +73,7 @@ export default async function PlanPage({ searchParams }: { searchParams: Promise
           <>
             {overdue > 0 && <form action={recoverMissedAction.bind(null, enrollment.id)}><SubmitButton variant="gold" pendingLabel="Rescheduling…">Recover {overdue} missed task{overdue > 1 ? "s" : ""}</SubmitButton></form>}
             <form action={rebuildPlanAction.bind(null, enrollment.id)}><SubmitButton variant="secondary" pendingLabel="Rebuilding…">Rebuild from latest results</SubmitButton></form>
+            <a href="/api/calendar" download className="inline-flex items-center gap-2 rounded-full border border-white/40 px-4 py-2 text-sm font-medium text-white transition hover:bg-white hover:text-navy-950">Add to calendar (.ics)</a>
           </>
         }
       />

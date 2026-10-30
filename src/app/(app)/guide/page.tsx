@@ -12,7 +12,12 @@ export default async function GuidePage({ searchParams }: { searchParams: Promis
   const selected = program === "all" ? undefined : (program ?? enrollment?.program.slug);
   return (
     <>
-      <PageHeader eyebrow="Overview / Exam guide" title="Dates, Fees & Difficulty" description="Upcoming windows with countdowns, registration deadlines, fees, published pass rates, difficulty and official links. Reminders for your exam date and registration deadlines arrive in Notifications." />
+      <PageHeader
+        eyebrow="Overview / Exam guide"
+        title="Dates, Fees & Difficulty"
+        description="Upcoming windows with countdowns, registration deadlines, fees, published pass rates, difficulty and official links. Reminders for your exam date and registration deadlines arrive in Notifications."
+        actions={<a href="/api/calendar" download className="pill-outline">Add my dates to calendar</a>}
+      />
       <ExamGuide programs={programs} selected={selected} basePath="/guide?program=all" />
     </>
   );

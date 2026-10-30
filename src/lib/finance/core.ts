@@ -371,3 +371,59 @@ export function progressiveTax(taxableIncome: Num, brackets: TaxBracket[]): Deci
   }
   return tax;
 }
+
+// ---------------------------------------------------------------------------
+// Interest, cost and management accounting, economics, alternatives
+// ---------------------------------------------------------------------------
+
+/** Simple interest earned: P × r × t (no compounding). */
+export function simpleInterest(principal: Num, rate: Num, years: Num): Decimal {
+  return D(principal).times(rate).times(years);
+}
+
+/** Future value of level payments made at the start of each period (annuity due), e.g. a monthly SIP. */
+export function futureValueAnnuityDue(pmt: Num, rate: Num, periods: Num): Decimal {
+  return futureValue(0, rate, periods, pmt, 1);
+}
+
+/** Break-even volume in units: fixed costs / (price − variable cost per unit). */
+export function breakEvenUnits(fixedCosts: Num, price: Num, variableCost: Num): Decimal {
+  const cm = D(price).minus(variableCost);
+  if (cm.lte(0)) throw new FinanceInputError("Price must exceed variable cost per unit");
+  return D(fixedCosts).div(cm);
+}
+
+/** Contribution margin ratio: (price − variable cost) / price. */
+export function contributionMarginRatio(price: Num, variableCost: Num): Decimal {
+  if (D(price).lte(0)) throw new FinanceInputError("Price must be positive");
+  return D(price).minus(variableCost).div(price);
+}
+
+/** Price elasticity of demand by the midpoint (arc) method; returned as a signed number. */
+export function arcElasticity(q1: Num, q2: Num, p1: Num, p2: Num): Decimal {
+  const dq = D(q2).minus(q1).div(D(q1).plus(q2).div(2));
+  const dp = D(p2).minus(p1).div(D(p1).plus(p2).div(2));
+  if (dp.isZero()) throw new FinanceInputError("Prices must differ");
+  return dq.div(dp);
+}
+
+/** Inventory turnover: cost of goods sold / average inventory. */
+export function inventoryTurnover(cogs: Num, beginInventory: Num, endInventory: Num): Decimal {
+  const avg = D(beginInventory).plus(endInventory).div(2);
+  if (avg.lte(0)) throw new FinanceInputError("Average inventory must be positive");
+  return D(cogs).div(avg);
+}
+
+/**
+ * Investor's net return from a hedge fund under a management + incentive fee
+ * schedule. Convention used here (state it in questions): the management fee
+ * is charged on beginning assets, and the incentive fee is charged on the gross
+ * return net of the management fee, above any hurdle (soft hurdle = on the
+ * whole excess once the hurdle is cleared; hard hurdle = only on the excess).
+ */
+export function hedgeFundNetReturn(grossReturn: Num, managementFee: Num, incentiveFee: Num, hurdle: Num = 0, hardHurdle = 0): Decimal {
+  const afterMgmt = D(grossReturn).minus(managementFee);
+  let incentiveBase = D(0);
+  if (afterMgmt.gt(hurdle)) incentiveBase = hardHurdle ? afterMgmt.minus(hurdle) : afterMgmt;
+  return afterMgmt.minus(incentiveBase.times(incentiveFee));
+}

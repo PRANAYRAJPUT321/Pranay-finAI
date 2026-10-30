@@ -27,8 +27,10 @@ src/
     ai/                provider abstraction, tools, grounding, offline tutor, tutor service
     admin/             content administration, audit log
     notifications/     email abstraction, reminder rules (pure), notify() + web push
+    engagement/        daily challenge, rapid fire, iCalendar export (pure writer + service)
     materials/         PDF toolkit (pdfkit + bundled fonts in assets/fonts) and document builders
   lib/video/           lesson → explainer scene script (pure, unit tested)
+  content/             static reference content (glossary)
 ```
 
 Business logic sits in `src/server/**` (framework-agnostic and covered by tests);
@@ -47,4 +49,4 @@ pages and components only render and call services.
 
 ## Data model (summary)
 
-Users, sessions, auth tokens, rate limits, audit logs, entitlements · exam programs, levels, syllabus versions, exam windows, topics (tree), prerequisites, learning outcomes, content sources · lessons, formulas · questions, question versions, item sets · enrollments, attempts, attempt items · topic proficiency, lesson progress · study plans, study tasks, study logs · flashcards, card states, review logs, question review states · bookmarks, notes · tutor sessions and messages · content reports, notifications, achievements, study groups · past papers.
+Users, sessions, auth tokens, rate limits, audit logs, entitlements · exam programs, levels, syllabus versions, exam windows, topics (tree), prerequisites, learning outcomes, content sources · lessons, formulas · daily challenges, rapid-fire runs · questions, question versions, item sets · enrollments, attempts, attempt items · topic proficiency, lesson progress · study plans, study tasks, study logs · flashcards, card states, review logs, question review states · bookmarks, notes · tutor sessions and messages · content reports, notifications, achievements, study groups · past papers.

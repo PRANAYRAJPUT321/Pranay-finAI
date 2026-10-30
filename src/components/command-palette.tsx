@@ -13,6 +13,11 @@ const EXTRA = [
   { href: "/materials", label: "Download study material (PDF)", hint: "Materials" },
   { href: "/guide", label: "Exam dates, fees and difficulty", hint: "Exam Guide" },
   { href: "/onboarding", label: "Add another certification", hint: "Exams" },
+  { href: "/daily", label: "Answer today's question", hint: "Daily" },
+  { href: "/rapid-fire", label: "Play a 60-second round", hint: "Rapid Fire" },
+  { href: "/focus", label: "Start a focus session", hint: "Focus" },
+  { href: "/glossary", label: "Look up a term", hint: "Glossary" },
+  { href: "/api/calendar", label: "Export study calendar (.ics)", hint: "Calendar" },
 ];
 
 /** Ctrl/⌘+K quick navigation. */

@@ -40,6 +40,7 @@ export async function onboardingAction(_: ActionState, form: FormData): Promise<
         mode: "UNTIMED",
         count: DIAGNOSTIC_SIZE,
       });
+      revalidatePath("/", "layout"); // the app header shows the newly chosen exam
       redirect(`/attempt/${attempt.id}`);
     } catch (e) {
       if (!(e instanceof AttemptError)) throw e;
@@ -47,6 +48,7 @@ export async function onboardingAction(_: ActionState, form: FormData): Promise<
     }
   }
   await buildPlan(user.id, enrollment.id);
+  revalidatePath("/", "layout");
   redirect("/dashboard?welcome=1");
 }
 

@@ -438,6 +438,93 @@ export const calculators: Calculator[] = [
     compute: (a) =>
       F.doubleDecliningDepreciation(n(a, "cost"), n(a, "salvage"), n(a, "usefulLife"), n(a, "year")).toNumber(),
   },
+  {
+    key: "simpleInterest",
+    label: "Simple interest",
+    description: "Interest = P x r x t, with no compounding.",
+    params: [
+      { name: "principal", label: "Principal", kind: "number", example: 50000 },
+      { name: "rate", label: "Annual rate (decimal)", kind: "number", example: 0.08 },
+      { name: "years", label: "Time (years)", kind: "number", example: 3 },
+    ],
+    output: "money",
+    compute: (a) => F.simpleInterest(n(a, "principal"), n(a, "rate"), n(a, "years")).toNumber(),
+  },
+  {
+    key: "futureValueAnnuityDue",
+    label: "Future value (annuity due / SIP)",
+    description: "FV of level payments made at the start of each period.",
+    params: [
+      { name: "pmt", label: "Payment per period", kind: "number", example: 5000 },
+      { name: "rate", label: "Rate per period (decimal)", kind: "number", example: 0.01 },
+      { name: "periods", label: "Number of periods", kind: "number", example: 12 },
+    ],
+    output: "money",
+    compute: (a) => F.futureValueAnnuityDue(n(a, "pmt"), n(a, "rate"), n(a, "periods")).toNumber(),
+  },
+  {
+    key: "breakEvenUnits",
+    label: "Break-even units",
+    description: "Fixed costs / contribution margin per unit.",
+    params: [
+      { name: "fixedCosts", label: "Fixed costs", kind: "number", example: 120000 },
+      { name: "price", label: "Selling price per unit", kind: "number", example: 50 },
+      { name: "variableCost", label: "Variable cost per unit", kind: "number", example: 30 },
+    ],
+    output: "number",
+    compute: (a) => F.breakEvenUnits(n(a, "fixedCosts"), n(a, "price"), n(a, "variableCost")).toNumber(),
+  },
+  {
+    key: "contributionMarginRatio",
+    label: "Contribution margin ratio",
+    description: "(Price - variable cost) / price.",
+    params: [
+      { name: "price", label: "Selling price per unit", kind: "number", example: 50 },
+      { name: "variableCost", label: "Variable cost per unit", kind: "number", example: 30 },
+    ],
+    output: "percent",
+    compute: (a) => F.contributionMarginRatio(n(a, "price"), n(a, "variableCost")).toNumber(),
+  },
+  {
+    key: "arcElasticity",
+    label: "Price elasticity (midpoint)",
+    description: "% change in quantity / % change in price, using midpoints.",
+    params: [
+      { name: "q1", label: "Initial quantity", kind: "number", example: 100 },
+      { name: "q2", label: "New quantity", kind: "number", example: 80 },
+      { name: "p1", label: "Initial price", kind: "number", example: 10 },
+      { name: "p2", label: "New price", kind: "number", example: 12 },
+    ],
+    output: "ratio",
+    compute: (a) => F.arcElasticity(n(a, "q1"), n(a, "q2"), n(a, "p1"), n(a, "p2")).toNumber(),
+  },
+  {
+    key: "inventoryTurnover",
+    label: "Inventory turnover",
+    description: "COGS / average inventory.",
+    params: [
+      { name: "cogs", label: "Cost of goods sold", kind: "number", example: 600000 },
+      { name: "beginInventory", label: "Opening inventory", kind: "number", example: 90000 },
+      { name: "endInventory", label: "Closing inventory", kind: "number", example: 110000 },
+    ],
+    output: "ratio",
+    compute: (a) => F.inventoryTurnover(n(a, "cogs"), n(a, "beginInventory"), n(a, "endInventory")).toNumber(),
+  },
+  {
+    key: "hedgeFundNetReturn",
+    label: "Hedge fund net return",
+    description: "Net of a management fee and an incentive fee (on return after the management fee), with optional hurdle.",
+    params: [
+      { name: "grossReturn", label: "Gross return (decimal)", kind: "number", example: 0.15 },
+      { name: "managementFee", label: "Management fee (decimal)", kind: "number", example: 0.02 },
+      { name: "incentiveFee", label: "Incentive fee (decimal)", kind: "number", example: 0.2 },
+      { name: "hurdle", label: "Hurdle rate (decimal)", kind: "number", example: 0, optional: true },
+      { name: "hardHurdle", label: "Hard hurdle? (1 = yes, 0 = soft)", kind: "number", example: 0, optional: true },
+    ],
+    output: "percent",
+    compute: (a) =>
+      F.hedgeFundNetReturn(n(a, "grossReturn"), n(a, "managementFee"), n(a, "incentiveFee"), (a.hurdle as number) ?? 0, (a.hardHurdle as number) ?? 0).toNumber(),
+  },
 ];
 
 export const calculatorMap: Record<string, Calculator> = Object.fromEntries(calculators.map((c) => [c.key, c]));
