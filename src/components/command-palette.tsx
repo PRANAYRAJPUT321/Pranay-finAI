@@ -17,6 +17,10 @@ const EXTRA = [
   { href: "/rapid-fire", label: "Play a 60-second round", hint: "Rapid Fire" },
   { href: "/focus", label: "Start a focus session", hint: "Focus" },
   { href: "/glossary", label: "Look up a term", hint: "Glossary" },
+  { href: "/galaxy", label: "Explore the syllabus in 3D", hint: "Galaxy" },
+  { href: "/labs", label: "Rotate a formula in 3D", hint: "Labs" },
+  { href: "/hub", label: "Find free textbooks and courses", hint: "Resources" },
+  { href: "/voice-drill", label: "Revise hands-free by voice", hint: "Voice" },
   { href: "/api/calendar", label: "Export study calendar (.ics)", hint: "Calendar" },
 ];
 

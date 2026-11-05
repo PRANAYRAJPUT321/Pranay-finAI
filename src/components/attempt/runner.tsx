@@ -375,7 +375,7 @@ export function AttemptRunner({ initial, enrollmentId }: { initial: AttemptView;
         <p className="text-xs text-slate-500">Answers save automatically. {view.config.allowPause ? "You can pause and resume later, even after signing out." : "Exam simulation: the clock keeps running if you leave."}</p>
       </aside>
 
-      <dialog ref={dialogRef} className="w-[min(28rem,calc(100vw-2rem))] rounded-xl p-0 backdrop:bg-navy-950/60" aria-labelledby="submit-title">
+      <dialog ref={dialogRef} className="surface w-[min(28rem,calc(100vw-2rem))] rounded-2xl p-0 text-slate-800 shadow-2xl backdrop:bg-black/70 backdrop:backdrop-blur-sm" aria-labelledby="submit-title">
         <div className="p-5">
           <h2 id="submit-title" className="text-lg font-semibold text-navy-900">Submit your answers?</h2>
           <ul className="mt-3 space-y-1 text-sm text-slate-700">

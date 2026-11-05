@@ -7,7 +7,7 @@ async function noHorizontalScroll(page: import("@playwright/test").Page) {
 }
 
 test("landing, catalog and app pages fit a phone screen", async ({ page }) => {
-  for (const path of ["/", "/catalog", "/catalog/cfa", "/login"]) {
+  for (const path of ["/", "/catalog", "/catalog/cfa", "/login", "/resources"]) {
     await page.goto(path);
     await noHorizontalScroll(page);
   }
@@ -22,6 +22,11 @@ test("landing, catalog and app pages fit a phone screen", async ({ page }) => {
     await noHorizontalScroll(page);
   }
   for (const path of ["/guide", "/materials", "/videos", "/get-app", "/glossary", "/daily", "/rapid-fire", "/focus"]) {
+    await page.goto(path);
+    await noHorizontalScroll(page);
+  }
+  // 3D scenes, the resource hub and the voice drill must also fit (3D canvases fall back to CSS without WebGL).
+  for (const path of ["/galaxy", "/labs", "/hub", "/voice-drill"]) {
     await page.goto(path);
     await noHorizontalScroll(page);
   }

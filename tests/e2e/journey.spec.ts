@@ -81,6 +81,11 @@ test("a student can complete the core preparation journey and resume later", asy
   await expect(page.getByText("Limitations")).toBeVisible();
   await page.goto("/dashboard");
   await expect(page.getByRole("heading", { name: "Recommended next steps" })).toBeVisible();
+  // The personalised briefing film plays and can be skipped scene by scene.
+  await page.getByRole("button", { name: "Play your daily briefing" }).click();
+  await expect(page.getByRole("button", { name: "Pause briefing" })).toBeVisible();
+  await page.getByRole("button", { name: "Next scene" }).click();
+  await page.getByRole("button", { name: "Pause briefing" }).click();
 
   // 12. Resume after logging out and back in.
   await page.getByRole("button", { name: "Sign out" }).click();

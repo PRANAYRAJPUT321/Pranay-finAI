@@ -23,8 +23,9 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   const initials = user.name.split(" ").map((p) => p[0]).slice(0, 2).join("").toUpperCase();
   return (
     <div className="min-h-screen lg:flex">
-      <aside className="bg-ink sticky top-0 hidden h-screen w-64 shrink-0 flex-col overflow-hidden border-r border-white/5 lg:flex">
-        <span aria-hidden className="red-beam left-[85%] opacity-40" />
+      <aside className="scope-dark sticky top-0 hidden h-screen w-64 shrink-0 flex-col overflow-hidden border-r border-white/[0.07] bg-[#070820]/80 backdrop-blur-2xl lg:flex">
+        <span aria-hidden className="pointer-events-none absolute -left-20 top-10 h-64 w-64 rounded-full bg-gold-600/25 blur-3xl" />
+        <span aria-hidden className="pointer-events-none absolute -bottom-24 -right-16 h-64 w-64 rounded-full bg-mint-500/15 blur-3xl" />
         <div className="relative px-5 py-5">
           <Link href="/dashboard" aria-label="PD FinPrep dashboard"><Logo inverted /></Link>
         </div>
@@ -37,13 +38,13 @@ export default async function AppLayout({ children }: { children: React.ReactNod
         </div>
       </aside>
       <div className="relative flex min-w-0 flex-1 flex-col">
-        <div aria-hidden className="bg-grid pointer-events-none absolute inset-x-0 top-0 h-96 [mask-image:linear-gradient(to_bottom,black,transparent)]" />
-        <header className="bg-ink sticky top-0 z-30 flex h-14 items-center justify-between gap-3 border-b border-white/10 px-4 text-white shadow-lg shadow-black/20 sm:px-6">
+        <div aria-hidden className="bg-grid pointer-events-none absolute inset-x-0 top-0 h-[32rem] [mask-image:linear-gradient(to_bottom,black,transparent)]" />
+        <header className="scope-dark sticky top-0 z-30 flex h-14 items-center justify-between gap-3 border-b border-white/[0.07] bg-[#05060f]/70 px-4 text-white backdrop-blur-2xl sm:px-6">
           <div className="flex min-w-0 items-center gap-3">
             <Link href="/dashboard" className="lg:hidden" aria-label="Dashboard"><Logo compact /></Link>
             {enrollment ? (
-              <Link href="/exams" className="truncate rounded-full border border-white/20 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-white transition hover:border-gold-500 hover:text-white" title="Switch exam">
-                <span className="text-gold-500">{enrollment.program.shortName}</span> · {enrollment.level.name}
+              <Link href="/exams" className="conic-border truncate rounded-full bg-white/[0.04] px-3 py-1 text-xs font-semibold uppercase tracking-[0.16em] text-white transition hover:bg-white/10" title="Switch exam">
+                <span className="text-gradient-brand">{enrollment.program.shortName}</span> · {enrollment.level.name}
               </Link>
             ) : (
               <Link href="/onboarding" className="rounded-full bg-gold-500 px-3 py-1 text-xs font-semibold uppercase tracking-widest text-white">Choose an exam</Link>
@@ -53,7 +54,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
             <CommandPalette />
             <NotificationBell initialUnread={unread} />
             <Link href="/settings" className="hidden items-center gap-2 text-sm text-white/90 hover:text-white sm:inline-flex" title="Settings">
-              <span aria-hidden className="grid h-8 w-8 place-items-center rounded-full bg-gradient-to-br from-gold-500 to-gold-700 text-xs font-bold text-white ring-2 ring-white/20">{initials}</span>
+              <span aria-hidden className="grid h-8 w-8 place-items-center rounded-full bg-gradient-to-br from-fuchsia-500 via-gold-500 to-mint-500 text-xs font-bold text-white ring-2 ring-white/20 shadow-[0_0_18px_rgba(139,92,246,0.6)]">{initials}</span>
               <span className="hidden md:inline">{user.name}</span>
             </Link>
             <form action={logoutAction}>

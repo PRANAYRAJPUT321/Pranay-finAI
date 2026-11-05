@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Coffee, Pause, Play, RotateCcw, SkipForward, Target } from "lucide-react";
+import { Coffee, Pause, Play, RotateCcw, SkipForward, Target, Waves } from "lucide-react";
+import { startSoundscape, type AudioEngine, type Soundscape } from "@/lib/audio/ambient";
 import clsx from "clsx";
 import { logFocusSessionAction } from "@/app/actions/engagement";
 
@@ -9,6 +10,12 @@ const PRESETS = [
   { label: "Classic", focus: 25, rest: 5 },
   { label: "Deep work", focus: 50, rest: 10 },
   { label: "Sprint", focus: 15, rest: 3 },
+];
+const SOUNDSCAPES: { value: Soundscape; label: string }[] = [
+  { value: "off", label: "Silence" },
+  { value: "pad", label: "Deep focus pad (generative)" },
+  { value: "rain", label: "Soft rain" },
+  { value: "brown", label: "Brown noise" },
 ];
 const ACTIVITIES = [
   { value: "lesson", label: "Reading lessons" },
@@ -61,6 +68,8 @@ export function FocusTimer({ todayMinutes }: { todayMinutes: number }) {
   const [logged, setLogged] = useState(todayMinutes);
   const [msg, setMsg] = useState<string | null>(null);
   const endsAt = useRef(0);
+  const [sound, setSound] = useState<Soundscape>("off");
+  const engine = useRef<AudioEngine | null>(null);
   const total = (mode === "focus" ? PRESETS[preset].focus : PRESETS[preset].rest) * 60;
 
   const complete = useCallback(async () => {
@@ -97,6 +106,16 @@ export function FocusTimer({ todayMinutes }: { todayMinutes: number }) {
     }, 250);
     return () => clearInterval(t);
   }, [running, complete]);
+
+  // Soundscape plays only while a focus session is running.
+  useEffect(() => {
+    engine.current?.stop();
+    engine.current = running && mode === "focus" ? startSoundscape(sound) : null;
+    return () => {
+      engine.current?.stop();
+      engine.current = null;
+    };
+  }, [running, mode, sound]);
 
   useEffect(() => {
     document.title = running ? `${fmt(left)} · ${mode === "focus" ? "Focus" : "Break"} · PD FinPrep` : "Focus Timer · PD FinPrep";
@@ -171,6 +190,13 @@ export function FocusTimer({ todayMinutes }: { todayMinutes: number }) {
             {ACTIVITIES.map((a) => <option key={a.value} value={a.value}>{a.label}</option>)}
           </select>
           <p className="mt-2 text-xs text-slate-500">Completed focus sessions are logged as study time and count towards your streak and weekly target. Paused or skipped sessions are not logged.</p>
+        </div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-5">
+          <label htmlFor="focus-sound" className="eyebrow flex items-center gap-1.5 text-[0.6rem] text-navy-700"><Waves className="h-3.5 w-3.5" aria-hidden /> Soundscape</label>
+          <select id="focus-sound" value={sound} onChange={(e) => setSound(e.target.value as Soundscape)} className="mt-2 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm">
+            {SOUNDSCAPES.map((x) => <option key={x.value} value={x.value}>{x.label}</option>)}
+          </select>
+          <p className="mt-2 text-xs text-slate-500">Generated live in your browser — nothing is downloaded. Plays during focus time and pauses for breaks.</p>
         </div>
         <div className="grid grid-cols-2 gap-3">
           <div className="rounded-2xl border border-slate-200 bg-white p-4 text-center"><p className="font-display text-3xl font-black text-navy-950">{sessions}</p><p className="text-[10px] uppercase tracking-widest text-slate-500">sessions now</p></div>

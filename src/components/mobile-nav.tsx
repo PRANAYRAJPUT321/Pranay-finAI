@@ -27,14 +27,14 @@ export function MobileNav({ showAdmin }: { showAdmin: boolean }) {
   }, [open]);
   return (
     <>
-      <nav aria-label="Quick" className="fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-navy-950/95 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl lg:hidden">
+      <nav aria-label="Quick" className="scope-dark fixed inset-x-0 bottom-0 z-40 border-t border-white/10 bg-[#070820]/90 pb-[env(safe-area-inset-bottom)] backdrop-blur-2xl lg:hidden">
         <ul className="grid grid-cols-5">
           {TABS.map(({ href, label, icon: Icon }) => {
             const active = pathname === href || pathname.startsWith(`${href}/`);
             return (
               <li key={href}>
                 <Link href={href} aria-current={active ? "page" : undefined} className={clsx("flex flex-col items-center gap-1 py-2.5 text-[11px] font-medium", active ? "text-white" : "text-navy-200")}>
-                  <Icon className={clsx("h-5 w-5", active ? "text-gold-500" : "text-mint-300/80")} aria-hidden />
+                  <Icon className={clsx("h-5 w-5", active ? "text-mint-300 drop-shadow-[0_0_8px_rgba(34,211,238,0.8)]" : "text-gold-300/70")} aria-hidden />
                   {label}
                 </Link>
               </li>

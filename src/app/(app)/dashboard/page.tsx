@@ -1,8 +1,14 @@
 import Link from "next/link";
-import { ArrowRight, BookA, CalendarPlus, Flame, Hourglass, Zap } from "lucide-react";
+import { ArrowRight, BookA, CalendarPlus, Flame, Hourglass, Orbit, Box, Zap } from "lucide-react";
 import { AccuracyTrend } from "@/components/charts";
 import { StartAttemptButton } from "@/components/start-attempt";
 import { DailyChallengeCard } from "@/components/daily-challenge";
+import { BriefingPlayer } from "@/components/briefing-player";
+import { ReadinessOrb } from "@/components/three";
+import { ActivityHeatmap } from "@/components/activity-heatmap";
+import { TalkCard } from "@/components/talk-card";
+import { TALKS } from "@/content/talks";
+import { buildBriefing } from "@/lib/video/briefing";
 import { dailyChallengeStats, getDailyChallenge } from "@/server/engagement/service";
 import { Alert, Badge, Card, CardTitle, EmptyState, LinkButton, MASTERY_TONE, PageHeader, Progress, Stat, fmtDate, fmtMinutes, pct } from "@/components/ui";
 import { requireUser } from "@/server/auth/current";
@@ -13,7 +19,7 @@ import { getActivePlan, getTasks, overdueCount } from "@/server/planner/service"
 import { dueCount } from "@/server/learning/flashcards";
 import { currentStreak, weeklyMinutes } from "@/server/learning/gamification";
 import { MASTERY_LABEL } from "@/server/adaptive/proficiency";
-import { utcDay } from "@/server/planner/generate";
+import { addDays, toDateKey, utcDay } from "@/server/planner/generate";
 
 export const metadata = { title: "Dashboard" };
 
@@ -46,45 +52,80 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     prisma.lessonProgress.findFirst({ where: { userId: user.id, status: "in_progress" }, orderBy: { startedAt: "desc" }, include: { lesson: true } }),
     prisma.notification.findMany({ where: { userId: user.id, readAt: null }, orderBy: { createdAt: "desc" }, take: 3 }),
   ]);
-  const [daily, dailyStats] = await Promise.all([getDailyChallenge(user.id, enrollment.syllabusVersionId), dailyChallengeStats(user.id)]);
+  const [daily, dailyStats, logs, prefs] = await Promise.all([
+    getDailyChallenge(user.id, enrollment.syllabusVersionId),
+    dailyChallengeStats(user.id),
+    prisma.studyLog.groupBy({ by: ["date"], where: { userId: user.id, date: { gte: addDays(today, -190) } }, _sum: { minutes: true } }),
+    prisma.user.findUnique({ where: { id: user.id }, select: { timezone: true } }),
+  ]);
+  const minutesByDay = Object.fromEntries(logs.map((l) => [toDateKey(l.date), l._sum.minutes ?? 0]));
   const weeklyTarget = enrollment.hoursPerDay * enrollment.studyDaysPerWeek * 60;
   const weakest = analytics.topics.filter((t) => t.attempts > 0).sort((a, b) => a.estimate - b.estimate).slice(0, 4);
   const sv = enrollment.syllabusVersionId;
   const daysLeft = analytics.overall.daysToExam;
 
+  const firstName = user.name.split(" ")[0];
+  let hour = new Date().getUTCHours();
+  try {
+    hour = Number(new Intl.DateTimeFormat("en-GB", { hour: "numeric", hourCycle: "h23", timeZone: prefs?.timezone || "UTC" }).format(new Date()));
+  } catch {
+    /* unknown time zone: keep UTC */
+  }
+  const pendingTasks = todayTasks.filter((t) => t.status === "PENDING");
+  const briefing = buildBriefing({
+    firstName,
+    examLabel: `${enrollment.program.shortName} ${enrollment.level.name}`,
+    daysLeft,
+    streak,
+    weekMinutes: weekMin,
+    weeklyTargetMinutes: weeklyTarget,
+    accuracy: analytics.overall.questionsAnswered > 0 ? analytics.overall.accuracy : null,
+    coverage: analytics.overall.coverage ?? 0,
+    weakestTopic: weakest[0]?.name ?? null,
+    todayTasks: pendingTasks.map((t) => ({ title: t.title, minutes: t.estimatedMinutes })),
+    cardsDue,
+    dailyAnswered: !!daily?.answered,
+    hour,
+    dayIndex: Math.floor(today.getTime() / 86_400_000),
+  });
+
   return (
     <>
-      <section className="bg-ink on-dark animate-fade-up relative mb-6 overflow-hidden rounded-3xl p-6 text-white shadow-xl shadow-black/25 sm:p-9">
-        <span className="red-beam left-[58%]" aria-hidden />
-        <span className="floor-glow" aria-hidden />
-        <div className="bg-grid-dark absolute inset-0 opacity-60" aria-hidden />
-        <div className="relative flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
-          <div>
-            <p className="eyebrow text-mint-300">{enrollment.program.shortName} {enrollment.level.name}{enrollment.targetExamDate ? ` · exam ${fmtDate(enrollment.targetExamDate)}` : " · no exam date set"}</p>
-            <h1 className="headline-xl mt-3 text-4xl uppercase sm:text-6xl"><span className="text-gold-500">Welcome</span> <span className="block text-white">back, {user.name.split(" ")[0]}</span></h1>
-            <span className="rule-red mt-4" aria-hidden />
-            <p className="mt-3 max-w-xl text-sm text-navy-100">Readiness: <strong className="text-white">{analytics.readiness.label}</strong> — {analytics.readiness.description}</p>
-            <div className="mt-5 flex flex-wrap gap-2">
-              <StartAttemptButton fields={{ syllabusVersionId: sv, enrollmentId: enrollment.id, kind: "PRACTICE", count: 10 }} variant="gold" size="md">Quick practice (10 Q)</StartAttemptButton>
-              <LinkButton href="/plan" variant="secondary">Full plan</LinkButton>
-            </div>
-          </div>
-          <div className="grid grid-cols-3 gap-3 text-center">
-            <div className="glass-dark rounded-2xl px-4 py-3">
-              <p className="font-display text-4xl font-black text-gold-500">{daysLeft ?? "—"}</p>
-              <p className="text-[11px] uppercase tracking-wider text-navy-200">days to exam</p>
-            </div>
-            <div className="glass-dark rounded-2xl px-4 py-3">
-              <p className="font-display text-4xl font-black text-white">{Math.round((analytics.overall.coverage ?? 0) * 100)}%</p>
-              <p className="text-[11px] uppercase tracking-wider text-navy-200">coverage</p>
-            </div>
-            <div className="glass-dark rounded-2xl px-4 py-3">
-              <p className="font-display text-4xl font-black text-white">{user.gamificationEnabled ? streak : todayTasks.length}</p>
-              <p className="text-[11px] uppercase tracking-wider text-navy-200">{user.gamificationEnabled ? "day streak" : "tasks today"}</p>
-            </div>
-          </div>
+      <div className="mb-6 grid gap-6 xl:grid-cols-5">
+        <div className="animate-fade-up xl:col-span-3">
+          <BriefingPlayer scenes={briefing} firstName={firstName} firstTask={pendingTasks[0]?.title ?? null} />
         </div>
-      </section>
+        <section className="bg-ink on-dark animate-fade-up relative overflow-hidden rounded-[1.75rem] p-6 text-white ring-1 ring-white/10 xl:col-span-2" style={{ "--delay": "120ms" } as React.CSSProperties}>
+          <div aria-hidden className="bg-grid-dark absolute inset-0 opacity-60" />
+          <div className="relative">
+            <p className="eyebrow text-mint-300">{enrollment.program.shortName} {enrollment.level.name}{enrollment.targetExamDate ? ` · exam ${fmtDate(enrollment.targetExamDate)}` : " · no exam date set"}</p>
+            <h1 className="font-display mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl">Welcome back, <span className="text-gradient-brand">{firstName}</span></h1>
+          </div>
+          <div className="relative -mx-2 h-52 sm:h-60">
+            <ReadinessOrb className="h-full w-full" coverage={analytics.overall.coverage ?? 0} accuracy={analytics.overall.questionsAnswered > 0 ? analytics.overall.accuracy ?? 0 : 0} />
+            <p className="pointer-events-none absolute bottom-1 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full border border-white/15 bg-black/40 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-navy-100 backdrop-blur">Readiness core · <span className="text-mint-300">coverage</span> · <span className="text-fuchsia-300">accuracy</span></p>
+          </div>
+          <div className="relative mt-3 grid grid-cols-3 gap-2 text-center">
+            <div className="glass-dark rounded-2xl px-2 py-3">
+              <p className="font-display text-3xl font-black text-gradient-brand">{daysLeft ?? "—"}</p>
+              <p className="text-[10px] uppercase tracking-wider text-navy-200">days to exam</p>
+            </div>
+            <div className="glass-dark rounded-2xl px-2 py-3">
+              <p className="font-display text-3xl font-black text-white">{Math.round((analytics.overall.coverage ?? 0) * 100)}%</p>
+              <p className="text-[10px] uppercase tracking-wider text-navy-200">coverage</p>
+            </div>
+            <div className="glass-dark rounded-2xl px-2 py-3">
+              <p className="font-display text-3xl font-black text-white">{user.gamificationEnabled ? streak : todayTasks.length}</p>
+              <p className="text-[10px] uppercase tracking-wider text-navy-200">{user.gamificationEnabled ? "day streak" : "tasks today"}</p>
+            </div>
+          </div>
+          <p className="relative mt-4 text-sm text-navy-100">Readiness: <strong className="text-white">{analytics.readiness.label}</strong> — {analytics.readiness.description}</p>
+          <div className="relative mt-4 flex flex-wrap gap-2">
+            <StartAttemptButton fields={{ syllabusVersionId: sv, enrollmentId: enrollment.id, kind: "PRACTICE", count: 10 }} variant="gold" size="md">Quick practice (10 Q)</StartAttemptButton>
+            <LinkButton href="/galaxy" variant="secondary"><Orbit className="h-4 w-4" aria-hidden /> Galaxy</LinkButton>
+          </div>
+        </section>
+      </div>
       {sp.denied && <Alert tone="error" className="mb-4">You do not have permission to open that page.</Alert>}
       {sp.welcome && <Alert tone="success" className="mb-4" title="Your plan is ready">Start with today&apos;s tasks below. Estimates will sharpen as you practise.</Alert>}
       {!enrollment.diagnosticAttemptId && (
@@ -126,6 +167,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
               { href: "/rapid-fire", icon: Zap, title: "Rapid Fire", text: "60-second question sprint" },
               { href: "/focus", icon: Hourglass, title: "Focus Timer", text: "Pomodoro sessions, auto-logged" },
               { href: "/glossary", icon: BookA, title: "Glossary", text: "Key terms and formulas" },
+              { href: "/labs", icon: Box, title: "3D Formula Labs", text: "See formulas as living shapes" },
               { href: "/api/calendar", icon: CalendarPlus, title: "Add to calendar", text: "Plan, exam dates and deadlines (.ics)" },
             ].map(({ href, icon: Icon, title, text }) => (
               <li key={href}>
@@ -140,7 +182,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-3">
-        <div className="space-y-6 lg:col-span-2">
+        <div className="min-w-0 space-y-6 lg:col-span-2">
           <Card>
             <CardTitle action={<Link href="/plan" className="text-sm text-navy-700 underline">Open plan</Link>}>Today&apos;s study plan</CardTitle>
             {todayTasks.length === 0 ? (
@@ -191,12 +233,17 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           </Card>
 
           <Card>
+            <CardTitle action={<Link href="/focus" className="text-sm text-navy-700 underline">Start a focus session</Link>}>Study activity (26 weeks)</CardTitle>
+            <ActivityHeatmap minutesByDay={minutesByDay} />
+          </Card>
+
+          <Card>
             <CardTitle action={<Link href="/analytics" className="text-sm text-navy-700 underline">Analytics</Link>}>Practice accuracy (12 weeks)</CardTitle>
             {analytics.overall.questionsAnswered === 0 ? <p className="text-sm text-slate-600">Your trend appears after your first practice set.</p> : <AccuracyTrend data={analytics.accuracyByWeek} />}
           </Card>
         </div>
 
-        <div className="space-y-6">
+        <div className="min-w-0 space-y-6">
           {(inProgress || lastLesson) && (
             <Card>
               <CardTitle>Continue learning</CardTitle>
@@ -277,6 +324,16 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           )}
         </div>
       </div>
+      <section className="mt-8" aria-labelledby="talks-title">
+        <div className="mb-4 flex flex-wrap items-end justify-between gap-2">
+          <div>
+            <p className="eyebrow text-fuchsia-300">Fuel for the long haul</p>
+            <h2 id="talks-title" className="font-display mt-1 text-2xl font-bold text-navy-950">Talks that change how you study</h2>
+          </div>
+          <Link href="/hub" className="text-sm text-mint-300 hover:underline">More in the Resource Hub →</Link>
+        </div>
+        <div className="grid gap-4 md:grid-cols-3">{TALKS.map((t) => <TalkCard key={t.id} talk={t} />)}</div>
+      </section>
     </>
   );
 }

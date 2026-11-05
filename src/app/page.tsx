@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { ArrowRight, BarChart3, BellRing, BookOpen, Bot, CalendarDays, CheckCircle2, FileDown, Layers, PlayCircle, ShieldCheck, Smartphone, Timer } from "lucide-react";
+import { ArrowRight, BellRing, BookOpen, Bot, Box, CalendarDays, CheckCircle2, Clapperboard, Globe2, Headphones, Orbit, PlayCircle, ShieldCheck, Smartphone, Sparkles } from "lucide-react";
 import { PublicFooter, PublicHeader } from "@/components/public-header";
 import { CountUp, Reveal } from "@/components/motion";
-import { HeroSlider, HeroVisual } from "@/components/hero-slider";
+import { Hero3D } from "@/components/three";
 import { InstallAppButton } from "@/components/pwa";
 import { prisma } from "@/server/db";
 import { getExamGuide } from "@/server/catalog/guide";
@@ -23,14 +23,14 @@ const CYCLE = [
 ];
 
 const FEATURES = [
-  { icon: CalendarDays, title: "Adaptive study plans", body: "Built from your exam date, availability, topic weights and diagnostic — with workload warnings and one-click recovery from missed days." },
-  { icon: PlayCircle, title: "Video explainers", body: "Short narrated, animated explainers generated from every lesson: intuition, formula, worked example, common trap, summary." },
-  { icon: FileDown, title: "PDF study notes", body: "Download lessons, formula sheets, exam fact sheets and full topic packs to read offline or print." },
-  { icon: CheckCircle2, title: "Verified answer keys", body: "Every numerical answer is recomputed by decimal-safe calculators before it is published. Never left to a language model." },
-  { icon: Timer, title: "Mock exam simulator", body: "Section timers, closed sections, autosave and full reports — modelled on each exam's configured structure." },
-  { icon: Layers, title: "Spaced repetition", body: "Formula, concept and mistake flashcards scheduled from your own honest recall ratings." },
-  { icon: Bot, title: "AI tutor", body: "Teach Me, Test My Thinking and Find My Mistake — grounded in course material, with deterministic calculators." },
-  { icon: BarChart3, title: "Transparent analytics", body: "Mastery separated from coverage, mock trends, error types and a readiness summary that states its limits." },
+  { icon: Clapperboard, title: "Your daily briefing film", body: "Every morning a short, narrated film made from your own plan, progress and countdown — with a generated soundtrack.", span: "lg:col-span-2", tint: "from-fuchsia-500 to-gold-600" },
+  { icon: Orbit, title: "Concept Galaxy", body: "Your syllabus as a 3D solar system: planet size is exam weight, colour is your mastery.", span: "", tint: "from-mint-500 to-gold-600" },
+  { icon: Box, title: "3D formula labs", body: "Rotate living surfaces for bond prices, compounding and diversification — read exact values anywhere.", span: "", tint: "from-sky-400 to-gold-600" },
+  { icon: PlayCircle, title: "AI video lessons with Nova", body: "Animated, narrated explainers with word-by-word captions and checkpoint questions that wait for your answer.", span: "lg:col-span-2", tint: "from-gold-500 to-mint-500" },
+  { icon: Headphones, title: "Hands-free voice drill", body: "Nova reads questions aloud and listens for “A”, “B” or “C”. Revise on a walk.", span: "", tint: "from-emerald-400 to-mint-500" },
+  { icon: Globe2, title: "Best of the web", body: "Free MIT and Yale courses, open textbooks, official exam resources and live data — curated and checked.", span: "", tint: "from-amber-400 to-fuchsia-500" },
+  { icon: CalendarDays, title: "Adaptive study plan", body: "Built from your exam date, availability, topic weights and diagnostic, with honest workload warnings.", span: "", tint: "from-gold-500 to-sky-400" },
+  { icon: CheckCircle2, title: "Verified answer keys", body: "Every numerical answer is recomputed by decimal-safe calculators before it is published.", span: "", tint: "from-emerald-400 to-gold-500" },
 ];
 
 const FALLBACK_EXAMS = ["CFA", "FRM", "CAIA", "CPA", "ACCA", "CMA", "CA (India)", "EA", "NISM", "CFP"];
@@ -67,13 +67,28 @@ export default async function LandingPage() {
       <main id="main" className="flex-1">
         {/* Hero */}
         <section className="bg-ink relative overflow-hidden text-white">
-          <span className="red-beam left-[60%]" aria-hidden />
-          <span className="red-beam left-[78%] opacity-50" style={{ animationDelay: "3s" }} aria-hidden />
-          <span className="floor-glow" aria-hidden />
           <div className="bg-grid-dark absolute inset-0 opacity-50" aria-hidden />
-          <div className="relative mx-auto grid min-h-[calc(100vh-4.5rem)] max-w-7xl items-center gap-10 px-4 pb-16 pt-12 sm:px-6 lg:grid-cols-[1.15fr_1fr] lg:pt-16">
-            <HeroSlider />
-            <div className="hidden lg:block"><HeroVisual /></div>
+          <Hero3D className="absolute inset-0 opacity-60 lg:left-[38%] lg:opacity-100" />
+          <div aria-hidden className="pointer-events-none absolute inset-0 bg-gradient-to-r from-[#06071a] from-20% via-[#06071a]/80 via-45% to-transparent to-75%" />
+          <div className="relative mx-auto grid min-h-[calc(100vh-4.5rem)] max-w-7xl items-center px-4 pb-16 pt-12 sm:px-6 lg:grid-cols-2 lg:pt-16">
+            <div>
+              <p className="eyebrow animate-fade-up inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-[0.62rem] text-mint-200 backdrop-blur">
+                <Sparkles className="h-3.5 w-3.5 text-mint-300" aria-hidden /> Exam prep, from the future
+              </p>
+              <h1 className="headline-xl animate-fade-up mt-6 text-[clamp(2.6rem,6.2vw,4.9rem)]" style={{ "--delay": "80ms" } as React.CSSProperties}>
+                Master finance exams in a <span className="text-gradient-brand">whole new dimension.</span>
+              </h1>
+              <p className="animate-fade-up mt-6 max-w-xl text-base leading-relaxed text-navy-100 sm:text-lg" style={{ "--delay": "160ms" } as React.CSSProperties}>
+                A personal AI study coach for CFA, FRM, CPA, ACCA, CMA, CA, EA, NISM, CFP and CAIA — with a daily briefing film made for you, 3D concept maps, narrated video lessons and a plan that adapts to every answer.
+              </p>
+              <div className="animate-fade-up mt-9 flex flex-wrap items-center gap-4" style={{ "--delay": "240ms" } as React.CSSProperties}>
+                <Link href="/register" className="btn-shine inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-fuchsia-500 via-gold-500 to-mint-500 px-7 py-3.5 text-sm font-semibold text-white shadow-[0_18px_50px_-12px_rgba(139,92,246,0.9)] transition hover:-translate-y-0.5">
+                  Start free <ArrowRight className="h-4 w-4" aria-hidden />
+                </Link>
+                <Link href="/exam-guide" className="pill-outline">Exam dates &amp; fees</Link>
+              </div>
+              <p className="animate-fade-up mt-5 text-xs text-navy-200" style={{ "--delay": "320ms" } as React.CSSProperties}>Free to start · no payment details · we never promise a pass — we show you the evidence.</p>
+            </div>
           </div>
           <div className="relative border-t border-white/10 bg-black/20 py-4">
             <div className="overflow-hidden [mask-image:linear-gradient(to_right,transparent,black_10%,black_90%,transparent)]">
@@ -95,7 +110,7 @@ export default async function LandingPage() {
               <Reveal className="flex flex-wrap items-end justify-between gap-4">
                 <div>
                   <p className="eyebrow text-gold-600">Countdown / Upcoming windows</p>
-                  <h2 className="headline-xl mt-3 text-4xl uppercase text-navy-950 sm:text-6xl">Next <span className="text-gold-500">Exams</span></h2>
+                  <h2 className="headline-xl mt-3 text-4xl text-navy-950 sm:text-6xl">Next <span className="text-gradient-brand">exams</span></h2>
                 </div>
                 <Link href="/exam-guide" className="pill-outline pill-outline-dark">All dates &amp; fees <ArrowRight className="h-4 w-4" aria-hidden /></Link>
               </Reveal>
@@ -140,25 +155,22 @@ export default async function LandingPage() {
         )}
 
         {/* Features */}
-        <section className="relative overflow-hidden bg-[#f4f6f4]">
+        <section className="relative overflow-hidden">
           <div className="relative mx-auto max-w-7xl px-4 py-20 sm:px-6">
             <Reveal className="max-w-3xl">
-              <p className="eyebrow text-gold-600">Everything in one workflow</p>
-              <h2 className="headline-xl mt-3 text-4xl uppercase text-navy-950 sm:text-6xl">Study <span className="text-gold-500">Smarter</span><span className="block">Measure honestly</span></h2>
+              <p className="eyebrow text-fuchsia-300">Things no other prep platform does</p>
+              <h2 className="headline-xl mt-3 text-4xl text-navy-950 sm:text-6xl">Study <span className="text-gradient-brand">smarter.</span><span className="block">Measure honestly.</span></h2>
               <span className="rule-red mt-5" aria-hidden />
             </Reveal>
-            <div className="mt-12 grid gap-px overflow-hidden rounded-3xl bg-navy-950/10 sm:grid-cols-2 lg:grid-cols-4">
-              {FEATURES.map(({ icon: Icon, title, body }, i) => (
-                <Reveal key={title} delay={(i % 4) * 90} className="h-full">
-                  <div className="group h-full bg-white p-7 transition-colors duration-300 hover:bg-navy-950">
-                    <div className="flex items-center justify-between">
-                      <span className="grid h-11 w-11 place-items-center rounded-full border border-navy-950/15 text-gold-500 transition group-hover:border-gold-500 group-hover:bg-gold-500 group-hover:text-white">
-                        <Icon className="h-5 w-5" aria-hidden />
-                      </span>
-                      <span className="font-display text-sm font-bold text-slate-300 group-hover:text-white/40">{String(i + 1).padStart(2, "0")}</span>
-                    </div>
-                    <h3 className="font-display mt-5 text-xl font-bold text-navy-950 group-hover:text-white">{title}</h3>
-                    <p className="mt-2 text-sm leading-relaxed text-slate-600 group-hover:text-navy-100">{body}</p>
+            <div className="mt-12 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              {FEATURES.map(({ icon: Icon, title, body, span, tint }, i) => (
+                <Reveal key={title} delay={(i % 4) * 90} className={`h-full ${span}`}>
+                  <div className="surface spotlight tilt-hover group h-full p-7">
+                    <span className={`grid h-12 w-12 place-items-center rounded-2xl bg-gradient-to-br ${tint} text-white shadow-lg transition duration-500 group-hover:rotate-6 group-hover:scale-110`}>
+                      <Icon className="h-5 w-5" aria-hidden />
+                    </span>
+                    <h3 className="font-display mt-5 text-xl font-bold text-navy-950">{title}</h3>
+                    <p className="mt-2 text-sm leading-relaxed text-slate-600">{body}</p>
                   </div>
                 </Reveal>
               ))}
@@ -173,7 +185,7 @@ export default async function LandingPage() {
           <div className="relative mx-auto grid max-w-7xl items-center gap-10 px-4 py-20 sm:px-6 lg:grid-cols-2">
             <Reveal>
               <p className="eyebrow text-mint-300">Phone · Tablet · Desktop</p>
-              <h2 className="headline-xl mt-3 text-5xl uppercase sm:text-7xl"><span className="text-gold-500">Install</span><span className="block">the app</span></h2>
+              <h2 className="headline-xl mt-3 text-5xl sm:text-7xl"><span className="text-gradient-brand">Install</span><span className="block">the app</span></h2>
               <span className="rule-red mt-5" aria-hidden />
               <p className="mt-5 max-w-lg text-navy-100">Add PD FinPrep to your home screen for a full-screen app experience, offline access to recently opened pages and reminders for study sessions, exam countdowns and registration deadlines.</p>
               <InstallAppButton className="mt-8" />
@@ -203,7 +215,7 @@ export default async function LandingPage() {
           <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6">
             <Reveal>
               <p className="eyebrow text-gold-600">How it works</p>
-              <h2 className="headline-xl mt-3 text-4xl uppercase text-navy-950 sm:text-6xl">The <span className="text-gold-500">Cycle</span></h2>
+              <h2 className="headline-xl mt-3 text-4xl text-navy-950 sm:text-6xl">The <span className="text-gradient-brand">cycle</span></h2>
             </Reveal>
             <ol className="mt-12 grid gap-x-8 gap-y-10 sm:grid-cols-2 lg:grid-cols-3">
               {CYCLE.map((c, i) => (
@@ -227,10 +239,10 @@ export default async function LandingPage() {
           <span className="floor-glow" aria-hidden />
           <Reveal className="relative mx-auto max-w-5xl px-4 py-24 text-center sm:px-6">
             <p className="eyebrow text-mint-300">Free diagnostic</p>
-            <h2 className="headline-xl mt-4 text-5xl uppercase text-white sm:text-7xl">Start <span className="text-gold-500">Today</span></h2>
+            <h2 className="headline-xl mt-4 text-5xl text-white sm:text-7xl">Start <span className="text-gradient-brand">today</span></h2>
             <p className="mx-auto mt-5 max-w-xl text-navy-100">Choose your exam, tell us your schedule and get a personalised plan in minutes. No payment details. We never promise a pass — we show you the evidence.</p>
             <div className="mt-9 flex flex-wrap justify-center gap-4">
-              <Link href="/register" className="btn-shine inline-flex items-center gap-2 rounded-full bg-gold-500 px-7 py-3.5 text-[0.72rem] font-semibold uppercase tracking-[0.28em] text-white shadow-xl shadow-gold-500/30 transition hover:-translate-y-0.5 hover:bg-gold-600">Create free account <ArrowRight className="h-4 w-4" aria-hidden /></Link>
+              <Link href="/register" className="btn-shine inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-fuchsia-500 via-gold-500 to-mint-500 px-7 py-3.5 text-sm font-semibold text-white shadow-[0_18px_50px_-12px_rgba(139,92,246,0.9)] transition hover:-translate-y-0.5">Create free account <ArrowRight className="h-4 w-4" aria-hidden /></Link>
               <Link href="/catalog" className="pill-outline">See supported exams</Link>
             </div>
           </Reveal>

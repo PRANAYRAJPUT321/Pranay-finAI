@@ -7,12 +7,13 @@ const LINKS = [
   { href: "/", label: "Home" },
   { href: "/catalog", label: "Exams" },
   { href: "/exam-guide", label: "Dates & Fees" },
+  { href: "/resources", label: "Resources" },
 ];
 
 export async function PublicHeader() {
   const user = await getCurrentUser().catch(() => null);
   return (
-    <header className="sticky top-0 z-40 border-b border-white/10 bg-navy-950/85 backdrop-blur-xl">
+    <header className="scope-dark sticky top-0 z-40 border-b border-white/[0.07] bg-[#05060f]/70 backdrop-blur-2xl">
       <div className="mx-auto flex max-w-7xl items-center justify-between gap-4 px-4 py-4 sm:px-6">
         <Link href="/" aria-label="PD FinPrep home"><Logo inverted /></Link>
         <nav aria-label="Site" className="flex items-center gap-2 sm:gap-7">
@@ -37,7 +38,7 @@ export async function PublicHeader() {
 
 export function PublicFooter() {
   return (
-    <footer className="bg-ink relative overflow-hidden text-navy-100">
+    <footer className="bg-ink relative overflow-hidden border-t border-white/10 text-navy-100">
       <div className="relative mx-auto grid max-w-7xl gap-8 px-4 py-12 sm:px-6 md:grid-cols-4">
         <div className="md:col-span-2">
           <Logo inverted />
@@ -50,6 +51,7 @@ export function PublicFooter() {
           <p className="eyebrow text-[0.6rem] text-mint-300">Explore</p>
           <Link href="/catalog" className="block hover:text-white">Exam catalog</Link>
           <Link href="/exam-guide" className="block hover:text-white">Dates, fees & difficulty</Link>
+          <Link href="/resources" className="block hover:text-white">Free resources</Link>
           <Link href="/register" className="block hover:text-white">Create an account</Link>
         </nav>
         <nav aria-label="Legal" className="space-y-2 text-sm">

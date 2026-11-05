@@ -25,7 +25,7 @@ export default async function VideosPage() {
       <PageHeader
         eyebrow="Study / Watch"
         title="Video Lessons"
-        description="Short animated, narrated explainers generated from every lesson: the big idea, the key formula, a worked example, the classic exam trap and a summary. Perfect for a first pass or a quick refresh."
+        description="AI-narrated explainers generated from every lesson. Nova walks you through the big idea, the key formula and a worked example, then pauses for a checkpoint question that waits for your answer. Word-by-word captions, chapters, speed, voice choice and an optional soundtrack included."
       />
       {groups.length === 0 ? (
         <EmptyState title="No video lessons yet" description="Video explainers appear automatically as lessons are published for your exam." />
@@ -33,7 +33,7 @@ export default async function VideosPage() {
         <div className="space-y-10">
           {groups.map(({ topic, lessons }) => (
             <section key={topic.id}>
-              <h2 className="font-display text-2xl font-black uppercase tracking-tight text-navy-950">{topic.name}</h2>
+              <h2 className="font-display text-2xl font-bold tracking-tight text-navy-950">{topic.name}</h2>
               <span className="rule-red mt-2" aria-hidden />
               <div className="mt-5 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {lessons.map((l) => {
@@ -45,7 +45,10 @@ export default async function VideosPage() {
                         <div className="bg-ink relative aspect-video overflow-hidden p-5 text-white">
                           <span aria-hidden className="red-beam left-[65%] opacity-70" />
                           <span className="absolute left-4 top-3 font-display text-sm font-bold text-white/50">{String(i + 1).padStart(2, "0")}</span>
-                          <p className="headline-xl relative mt-6 line-clamp-3 break-words text-2xl uppercase"><span className="text-gold-500">{words[0]}</span> {words.slice(1).join(" ")}</p>
+                          <span aria-hidden className="orb orb-violet float absolute -right-6 -top-6 h-24 w-24 opacity-80" />
+                          <span aria-hidden className="orb orb-cyan float absolute bottom-6 right-10 h-8 w-8" style={{ animationDelay: "1.2s" }} />
+                          <p className="headline-xl relative mt-6 line-clamp-3 break-words pr-10 text-2xl"><span className="text-gradient-brand">{words[0]}</span> {words.slice(1).join(" ")}</p>
+                          <span className="absolute bottom-3 left-4 inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-black/40 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-widest text-white/80 backdrop-blur"><span className="h-1.5 w-1.5 rounded-full bg-mint-400 shadow-[0_0_8px_#22d3ee]" /> Narrated by Nova</span>
                           <span className="absolute inset-0 grid place-items-center opacity-0 transition group-hover:opacity-100">
                             <span className="grid h-14 w-14 place-items-center rounded-full bg-gold-500 shadow-xl shadow-gold-500/50"><PlayCircle className="h-7 w-7 text-white" aria-hidden /></span>
                           </span>

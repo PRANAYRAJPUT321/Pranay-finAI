@@ -65,11 +65,11 @@ export function GlossaryBrowser({ terms, programs, defaultProgram }: { terms: Gl
   }, [shown]);
 
   const chip = (active: boolean) =>
-    `rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.15em] transition ${active ? "bg-navy-950 text-white" : "border border-slate-300 text-navy-900 hover:border-navy-900"}`;
+    `rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.15em] transition ${active ? "bg-gradient-to-r from-gold-500 to-mint-600 text-white shadow-lg shadow-gold-500/30" : "border border-white/15 bg-white/[0.04] text-slate-700 hover:border-white/40"}`;
 
   return (
     <div>
-      <div className="sticky top-14 z-20 -mx-4 mb-6 space-y-3 border-b border-slate-200 bg-[#f4f6f4]/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
+      <div className="sticky top-14 z-20 -mx-4 mb-6 space-y-3 border-b border-white/10 bg-[#070820]/85 px-4 py-3 backdrop-blur-xl sm:-mx-6 sm:px-6 lg:-mx-8 lg:px-8">
         <label className="relative block">
           <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden />
           <input

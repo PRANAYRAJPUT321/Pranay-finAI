@@ -8,6 +8,8 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
   return (
     <div className="bg-ink relative flex min-h-screen flex-col overflow-hidden">
       <span className="red-beam left-[38%]" aria-hidden />
+      <span className="orb orb-violet float absolute -left-16 top-1/3 h-56 w-56 opacity-60" aria-hidden />
+      <span className="orb orb-cyan float absolute bottom-10 right-10 h-24 w-24 opacity-70" style={{ animationDelay: "1.5s" }} aria-hidden />
       <span className="floor-glow" aria-hidden />
       <div className="bg-grid-dark absolute inset-0 opacity-50" aria-hidden />
       <header className="relative px-4 py-5 sm:px-8">
@@ -15,8 +17,8 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       </header>
       <main id="main" className="relative mx-auto grid w-full max-w-5xl flex-1 items-start gap-10 px-4 pb-16 pt-4 sm:pt-10 lg:grid-cols-2 lg:items-center">
         <div className="hidden text-white lg:block">
-          <p className="eyebrow animate-fade-up text-mint-300">Same exams / New perspectives</p>
-          <h2 className="headline-xl animate-fade-up mt-5 uppercase"><span className="block text-7xl text-gold-500">Prepared</span><span className="block text-5xl text-white">Differently</span></h2>
+          <p className="eyebrow animate-fade-up text-mint-300">Exam prep, from the future</p>
+          <h2 className="headline-xl animate-fade-up mt-5"><span className="block text-6xl text-gradient-brand">Prepared</span><span className="block text-5xl text-white">differently.</span></h2>
           <span className="rule-red mt-6" aria-hidden />
           <ul className="mt-6 space-y-4">
             {POINTS.map((p, i) => (
@@ -26,7 +28,7 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
             ))}
           </ul>
         </div>
-        <div className="glass-card animate-fade-up w-full max-w-md justify-self-center p-6 sm:p-8">{children}</div>
+        <div className="glass-card scope-themed animate-fade-up w-full max-w-md justify-self-center p-6 sm:p-8">{children}</div>
       </main>
     </div>
   );

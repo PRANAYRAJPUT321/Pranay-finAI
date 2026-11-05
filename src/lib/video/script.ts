@@ -5,7 +5,13 @@
  * device's speech synthesis; nothing here is invented beyond the lesson.
  */
 
-export type SceneKind = "title" | "objectives" | "intuition" | "formula" | "example" | "trap" | "summary" | "outro";
+export type SceneKind = "title" | "objectives" | "intuition" | "formula" | "example" | "quiz" | "trap" | "summary" | "outro";
+
+export interface QuizCheckpoint {
+  id: string;
+  stem: string;
+  options: { id: string; text: string }[];
+}
 
 export type Scene = {
   kind: SceneKind;
@@ -16,6 +22,7 @@ export type Scene = {
   highlight?: string;
   narration: string[]; // sentences, spoken in order
   seconds: number; // estimated duration at 1× speed
+  quiz?: QuizCheckpoint; // interactive checkpoint (kind "quiz"); answers are graded on the server
 };
 
 type LessonInput = {
@@ -30,6 +37,7 @@ type LessonInput = {
     summary: string[];
   };
   formulas: { name: string; expression: string; variables: { symbol?: string; meaning?: string }[] }[];
+  quiz?: QuizCheckpoint | null;
 };
 
 const WORDS_PER_SECOND = 2.5;
@@ -137,6 +145,19 @@ export function buildExplainer(input: LessonInput): Scene[] {
         highlight: ex.answer,
         narration: [...firstSentences(ex.problem, 3, 360), ...steps.map((s, i) => `Step ${i + 1}. ${s}`), `So the answer is ${ex.answer}.`],
         extra: 3,
+      }),
+    );
+  }
+
+  if (input.quiz) {
+    scenes.push(
+      scene({
+        kind: "quiz",
+        eyebrow: "Checkpoint",
+        heading: "Your turn",
+        lines: [],
+        quiz: input.quiz,
+        narration: ["Checkpoint. Pause, think it through, and choose an answer before we continue."],
       }),
     );
   }

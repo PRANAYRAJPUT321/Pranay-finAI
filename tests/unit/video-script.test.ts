@@ -39,8 +39,27 @@ describe("video explainer script", () => {
     scenes.forEach((s) => expect(s.seconds).toBeGreaterThanOrEqual(5));
   });
 
+  it("adds an interactive checkpoint after the worked example when a quiz is supplied", () => {
+    const scenes = buildExplainer({ ...lesson, quiz: { id: "q1", stem: "What is the price?", options: [{ id: "a", text: "97.33" }, { id: "b", text: "100" }] } });
+    const kinds = scenes.map((s) => s.kind);
+    expect(kinds.indexOf("quiz")).toBe(kinds.indexOf("example") + 1);
+    expect(scenes.find((s) => s.kind === "quiz")?.quiz?.options).toHaveLength(2);
+  });
+
   it("skips optional scenes when content is missing", () => {
     const scenes = buildExplainer({ ...lesson, formulas: [], content: { ...lesson.content, workedExamples: [], misconceptions: [] } });
     expect(scenes.some((s) => s.kind === "formula" || s.kind === "example" || s.kind === "trap")).toBe(false);
+  });
+});
+
+import { wordAt } from "@/lib/video/narrator";
+
+describe("narrator word tracking", () => {
+  it("maps character offsets to word indexes", () => {
+    const t = "Bond prices fall when yields rise";
+    expect(wordAt(t, 0)).toBe(0);
+    expect(wordAt(t, 5)).toBe(1);
+    expect(wordAt(t, 12)).toBe(2);
+    expect(wordAt(t, t.indexOf("rise"))).toBe(5);
   });
 });

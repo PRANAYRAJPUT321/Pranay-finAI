@@ -4,6 +4,10 @@ import { login, register } from "./helpers";
 test("protected pages redirect anonymous visitors to sign in", async ({ page }) => {
   await page.goto("/plan");
   await expect(page).toHaveURL(/\/login\?next=%2Fplan/);
+  for (const path of ["/galaxy", "/labs", "/hub", "/voice-drill"]) {
+    await page.goto(path);
+    await expect(page).toHaveURL(new RegExp(`/login\\?next=${encodeURIComponent(path)}`));
+  }
   const res = await page.request.get("/api/attempts/does-not-exist");
   expect(res.status()).toBe(401);
 });
