@@ -20,6 +20,7 @@ import { dueCount } from "@/server/learning/flashcards";
 import { currentStreak, weeklyMinutes } from "@/server/learning/gamification";
 import { MASTERY_LABEL } from "@/server/adaptive/proficiency";
 import { addDays, toDateKey, utcDay } from "@/server/planner/generate";
+import { narrationUrls } from "@/server/speech/narration";
 
 export const metadata = { title: "Dashboard" };
 
@@ -87,7 +88,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     dailyAnswered: !!daily?.answered,
     hour,
     dayIndex: Math.floor(today.getTime() / 86_400_000),
-  });
+  }).map((s) => ({ ...s, audio: narrationUrls(s.narration, { personal: true }) }));
 
   return (
     <>

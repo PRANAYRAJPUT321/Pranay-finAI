@@ -33,7 +33,9 @@ src/
     materials/         PDF toolkit (pdfkit + bundled fonts in assets/fonts) and document builders
   components/three/    WebGL scenes + SceneGate (progressive enhancement)
   lib/video/           lesson → explainer script, daily briefing script, narrator, spoken-answer parser (pure parts unit tested)
-  lib/audio/           Web Audio soundtrack and focus soundscapes
+  lib/audio/           Web Audio soundtrack, focus soundscapes and cartoon sound effects
+  components/cartoon/  Nova (SVG robot presenter with poses and lip-sync) and animated topic illustrations
+  server/speech/       neural narration: AI Gateway text-to-speech, signed sentence URLs, clip cache, budget
   content/             static reference content (glossary, Resource Hub list, curated talks)
 ```
 
@@ -51,6 +53,8 @@ pages and components only render and call services.
 - **Generated media stays grounded.** PDFs and video explainers are rendered from the same reviewed lesson/formula records; the video script adds no new claims and narration runs in the browser.
 - **3D is progressive enhancement.** Every scene has a CSS fallback, is lazy-loaded, stops rendering when off screen and respects `prefers-reduced-motion`; no page depends on WebGL to work.
 - **Personal media from personal data.** The briefing film is built by a pure function (`buildBriefing`) from the learner's plan, progress and countdown; copy is encouraging but never predicts results. Checkpoint questions are drawn from published questions linked to the lesson, with answer keys stripped before reaching the browser.
+- **Natural narration without a key to manage.** Pages sign each narration sentence (HMAC) and the browser fetches `/api/narration?v&t&s`; the route verifies the signature (so it can never read out arbitrary text), returns the cached clip from the `NarrationClip` table or generates it once through the Vercel AI Gateway (OIDC on Vercel, or `AI_GATEWAY_API_KEY`), trying `openai/gpt-4o-mini-tts`, then `tts-1-hd`, then `tts-1`. Responses are immutable and CDN-cached; a per-instance circuit breaker, a per-visitor limit on cache misses and a monthly character budget bound the cost. The player falls back to the best-ranked device voice when a clip is unavailable.
+- **Cartoons are code, not assets.** Nova and the illustrations are inline SVG animated with CSS (no downloads); the lip-sync level is written to a CSS variable every frame, so speech never re-renders React. Illustrations are chosen per lesson by `themeFor()` from its title and topic.
 - **Third-party content stays third-party.** Resource Hub entries are links with a short original description; talks are embedded from youtube-nocookie.com only after the learner presses play.
 - **Graceful degradation.** No AI key → offline tutor; provider failure → offline fallback; no email provider → console in development; no database → friendly error page and `/api/health` diagnostics.
 

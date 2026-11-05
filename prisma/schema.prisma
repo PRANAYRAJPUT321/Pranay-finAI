@@ -1007,3 +1007,18 @@ model RapidFireRun {
 
   @@index([userId, createdAt])
 }
+
+/// Neural narration audio generated once per distinct (narrator voice, sentence) and reused by every learner.
+model NarrationClip {
+  id        String   @id @default(cuid())
+  hash      String   @unique
+  voice     String
+  model     String
+  text      String
+  chars     Int
+  mime      String
+  audio     Bytes
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}

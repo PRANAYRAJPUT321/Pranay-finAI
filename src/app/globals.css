@@ -39,6 +39,7 @@
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-display: "Sora", "Inter", ui-sans-serif, system-ui, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  --font-hand: "Caveat", "Comic Sans MS", "Chalkboard SE", cursive;
 }
 
 /* Original token values, captured on <html> so dark components can restore them inside the inverted body scope. */
@@ -448,3 +449,133 @@ body::after {
 }
 @keyframes floor-move { from { background-position: 0 0; } to { background-position: 0 64px; } }
 @media (prefers-reduced-motion: reduce) { .floor-3d { animation: none; } }
+
+/* ---------------------------------------------------------------------------
+ * Cartoon layer for generated videos: Nova the robot presenter and animated
+ * topic illustrations. Transforms use SVG user units (transform-box).
+ * ------------------------------------------------------------------------- */
+.font-hand { font-family: var(--font-hand); letter-spacing: 0.01em; }
+
+.nova { --mouth: 0.06; }
+.nova svg { overflow: visible; }
+.nova .nova-float { animation: nova-float 3.4s ease-in-out infinite; }
+.nova .nova-shadow { transform-box: fill-box; transform-origin: center; animation: nova-shadow 3.4s ease-in-out infinite; }
+.nova .nova-jet { transform-box: fill-box; transform-origin: top; animation: nova-jet 0.18s ease-in-out infinite alternate; }
+.nova .arm { transform-box: view-box; transition: transform 0.55s cubic-bezier(0.34, 1.56, 0.64, 1); }
+.nova .arm-l { transform-origin: 84px 180px; transform: rotate(14deg); }
+.nova .arm-r { transform-origin: 156px 180px; transform: rotate(-14deg); }
+.nova .head { transform-box: view-box; transform-origin: 120px 156px; transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); animation: nova-nod 5s ease-in-out infinite; }
+.nova .eyes { transform-box: view-box; transition: transform 0.4s ease; }
+.nova .blink { transform-box: fill-box; transform-origin: center; animation: nova-blink-eye 4.2s infinite; }
+.nova .brow { transform-box: fill-box; transform-origin: center; transition: transform 0.3s ease; }
+.nova .mouth-open { transform-box: fill-box; transform-origin: center; transform: scaleY(var(--mouth)); transition: transform 0.06s linear; }
+.nova .mouth-closed { opacity: calc(1 - var(--mouth) * 4); }
+.nova .eq-bar { transform-box: fill-box; transform-origin: bottom; transform: scaleY(0.25); }
+.nova.is-speaking .eq-bar { animation: nova-eq 0.42s ease-in-out infinite alternate; }
+.nova .antenna-tip { transition: filter 0.2s; }
+.nova.is-speaking .antenna-tip { animation: nova-glow 0.9s ease-in-out infinite alternate; }
+.nova .prop, .nova .happy-eyes { opacity: 0; transition: opacity 0.3s ease; }
+.nova .bubble { opacity: 0; transform-box: fill-box; transform-origin: bottom left; transform: scale(0.4); transition: opacity 0.3s ease, transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1); }
+
+.nova.pose-wave .arm-r { animation: nova-wave 1.15s ease-in-out infinite; }
+.nova.pose-point .arm-r { transform: rotate(-108deg); }
+.nova.pose-point .prop-pointer { opacity: 1; }
+.nova.pose-point .head { transform: rotate(5deg); animation: none; }
+.nova.pose-point .eyes, .nova.pose-present .eyes, .nova.pose-write .eyes { transform: translateX(4px); }
+.nova.pose-present .arm-r { transform: rotate(-64deg); }
+.nova.pose-present .arm-l { transform: rotate(28deg); }
+.nova.pose-write .arm-r { animation: nova-write 0.9s ease-in-out infinite; }
+.nova.pose-write .prop-marker { opacity: 1; }
+.nova.pose-think .arm-l { transform: rotate(-128deg); }
+.nova.pose-think .head { transform: rotate(-7deg); animation: none; }
+.nova.pose-think .eyes { transform: translate(3px, -4px); }
+.nova.pose-think .brow-r { transform: translateY(-4px) rotate(-12deg); }
+.nova.pose-think .bubble-think { opacity: 1; transform: scale(1); }
+.nova.pose-alert .arm-l { transform: rotate(150deg); }
+.nova.pose-alert .arm-r { transform: rotate(-150deg); }
+.nova.pose-alert .nova-body { animation: nova-shake 0.5s ease-in-out infinite; }
+.nova.pose-alert .brow { transform: translateY(-5px); }
+.nova.pose-alert .bubble-alert { opacity: 1; transform: scale(1); }
+.nova.pose-cheer .arm-l { animation: nova-cheer-l 0.55s ease-in-out infinite alternate; }
+.nova.pose-cheer .arm-r { animation: nova-cheer-r 0.55s ease-in-out infinite alternate; }
+.nova.pose-cheer .nova-float { animation: nova-jump 0.55s ease-in-out infinite alternate; }
+.nova.pose-cheer .eye-open { opacity: 0; }
+.nova.pose-cheer .happy-eyes, .nova.pose-cheer .prop-stars { opacity: 1; }
+
+@keyframes nova-float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-9px); } }
+@keyframes nova-shadow { 0%, 100% { transform: scaleX(1); opacity: 0.45; } 50% { transform: scaleX(0.82); opacity: 0.3; } }
+@keyframes nova-jet { from { transform: scaleY(0.8); opacity: 0.75; } to { transform: scaleY(1.15); opacity: 1; } }
+@keyframes nova-nod { 0%, 100% { transform: rotate(0deg); } 30% { transform: rotate(2.5deg); } 60% { transform: rotate(-2deg); } }
+@keyframes nova-blink-eye { 0%, 92%, 100% { transform: scaleY(1); } 95% { transform: scaleY(0.1); } }
+@keyframes nova-eq { from { transform: scaleY(0.25); } to { transform: scaleY(1); } }
+@keyframes nova-glow { from { filter: drop-shadow(0 0 2px #e879f9); } to { filter: drop-shadow(0 0 9px #e879f9); } }
+@keyframes nova-wave { 0%, 100% { transform: rotate(-150deg); } 50% { transform: rotate(-118deg); } }
+@keyframes nova-write { 0%, 100% { transform: rotate(-84deg); } 50% { transform: rotate(-70deg); } }
+@keyframes nova-shake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-3px); } 75% { transform: translateX(3px); } }
+@keyframes nova-cheer-l { from { transform: rotate(135deg); } to { transform: rotate(165deg); } }
+@keyframes nova-cheer-r { from { transform: rotate(-135deg); } to { transform: rotate(-165deg); } }
+@keyframes nova-jump { from { transform: translateY(0); } to { transform: translateY(-16px); } }
+
+/* Topic illustrations */
+.toon { overflow: visible; }
+.toon .t-bob { transform-box: fill-box; transform-origin: center; animation: toon-bob 2.8s ease-in-out infinite; animation-delay: var(--d, 0s); }
+.toon .t-drop { animation: toon-drop 2.6s cubic-bezier(0.5, 0, 0.5, 1) infinite; animation-delay: var(--d, 0s); }
+.toon .t-grow { transform-box: fill-box; transform-origin: bottom; animation: toon-grow 3.2s cubic-bezier(0.34, 1.56, 0.64, 1) infinite; animation-delay: var(--d, 0s); }
+.toon .t-pop { transform-box: fill-box; transform-origin: center; animation: toon-pop 2.8s cubic-bezier(0.34, 1.56, 0.64, 1) infinite; animation-delay: var(--d, 0s); }
+.toon .t-sway { transform-box: view-box; animation: toon-sway 3.2s ease-in-out infinite; animation-delay: var(--d, 0s); }
+.toon .t-spin { transform-box: fill-box; transform-origin: center; animation: toon-spin 9s linear infinite; }
+.toon .t-spin-rev { transform-box: fill-box; transform-origin: center; animation: toon-spin 9s linear infinite reverse; }
+.toon .t-draw { stroke-dasharray: var(--len, 420); stroke-dashoffset: var(--len, 420); animation: toon-draw 3.6s ease-in-out infinite; animation-delay: var(--d, 0s); }
+.toon .t-fly { animation: toon-fly 3.2s ease-in infinite; animation-delay: var(--d, 0s); }
+.toon .t-rise { transform-box: fill-box; transform-origin: center; animation: toon-rise 3s ease-out infinite; animation-delay: var(--d, 0s); }
+.toon .t-blink { animation: toon-blink 2.2s steps(2, jump-none) infinite; animation-delay: var(--d, 0s); }
+.toon .t-slide { animation: toon-slide 4s linear infinite; animation-delay: var(--d, 0s); }
+.toon .t-rain { animation: toon-rain 1.1s linear infinite; animation-delay: var(--d, 0s); }
+.toon .t-pulse { transform-box: fill-box; transform-origin: center; animation: toon-pulse 1.8s ease-in-out infinite; animation-delay: var(--d, 0s); }
+.toon .t-sweep { animation: toon-sweep 4.5s ease-in-out infinite; }
+.toon .t-shake { animation: toon-shake 1.4s ease-in-out infinite; }
+.toon .t-cycle { opacity: 0; animation: toon-cycle 4.5s infinite; animation-delay: var(--d, 0s); }
+.toon .t-press { transform-box: fill-box; transform-origin: center; animation: toon-press 2.4s ease-in-out infinite; animation-delay: var(--d, 0s); }
+
+@keyframes toon-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-7px); } }
+@keyframes toon-drop { 0% { transform: translateY(-110px); opacity: 0; } 12% { opacity: 1; } 42% { transform: translateY(0); } 52% { transform: translateY(-14px); } 62%, 88% { transform: translateY(0); opacity: 1; } 100% { transform: translateY(0); opacity: 0; } }
+@keyframes toon-grow { 0% { transform: scaleY(0.02); } 35%, 82% { transform: scaleY(1); } 100% { transform: scaleY(0.02); } }
+@keyframes toon-pop { 0% { transform: scale(0); } 18%, 80% { transform: scale(1); } 100% { transform: scale(0); } }
+@keyframes toon-sway { 0%, 100% { transform: rotate(-6deg); } 50% { transform: rotate(6deg); } }
+@keyframes toon-spin { to { transform: rotate(360deg); } }
+@keyframes toon-draw { 0% { stroke-dashoffset: var(--len, 420); } 45%, 85% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: 0; opacity: 0; } }
+@keyframes toon-fly { 0% { transform: translate(0, 0) rotate(0deg); opacity: 0; } 12% { opacity: 1; } 100% { transform: translate(var(--fx, 110px), var(--fy, -70px)) rotate(28deg); opacity: 0; } }
+@keyframes toon-rise { 0% { transform: translateY(0) scale(0.6); opacity: 0; } 20% { opacity: 0.9; } 100% { transform: translateY(-46px) scale(1.7); opacity: 0; } }
+@keyframes toon-blink { 0% { opacity: 0.35; } 100% { opacity: 1; } }
+@keyframes toon-slide { from { transform: translateX(0); } to { transform: translateX(var(--sx, 160px)); } }
+@keyframes toon-rain { from { transform: translateY(-30px); opacity: 0; } 20% { opacity: 0.9; } to { transform: translateY(150px); opacity: 0.2; } }
+@keyframes toon-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.09); } }
+@keyframes toon-sweep { 0%, 100% { transform: translate(0, 0) rotate(-6deg); } 50% { transform: translate(120px, 36px) rotate(8deg); } }
+@keyframes toon-shake { 0%, 100% { transform: translateY(0); } 25% { transform: translateY(-6px); } 50% { transform: translateY(0); } 75% { transform: translateY(-4px); } }
+@keyframes toon-cycle { 0%, 30% { opacity: 1; } 33%, 100% { opacity: 0; } }
+@keyframes toon-press { 0%, 70%, 100% { transform: scale(1); } 80% { transform: scale(0.86); } }
+
+/* Chalkboard handwriting, answer stamp and sticky notes */
+.write-on { clip-path: inset(0 100% 0 0); animation: write-on 1.1s steps(28, end) forwards; animation-delay: var(--delay, 0ms); }
+@keyframes write-on { to { clip-path: inset(0 0 0 0); } }
+.stamp-in { animation: stamp-in 0.55s cubic-bezier(0.2, 1.4, 0.4, 1) both; animation-delay: var(--delay, 0ms); }
+@keyframes stamp-in { 0% { transform: scale(2.6) rotate(-18deg); opacity: 0; } 60% { transform: scale(0.92) rotate(-6deg); opacity: 1; } 100% { transform: scale(1) rotate(-6deg); opacity: 1; } }
+.burst-spin { animation: toon-spin 12s linear infinite; }
+.note-in { animation: note-in 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) both; animation-delay: var(--delay, 0ms); }
+@keyframes note-in { from { transform: translateY(26px) rotate(var(--r, 0deg)) scale(0.6); opacity: 0; } to { transform: translateY(0) rotate(var(--r, 0deg)) scale(1); opacity: 1; } }
+.bubble-hop { animation: bubble-hop 0.7s cubic-bezier(0.34, 1.56, 0.64, 1); }
+@keyframes bubble-hop { 0% { transform: translateY(0) scale(1); } 40% { transform: translateY(-14px) scale(1.18); } 100% { transform: translateY(0) scale(1); } }
+.iris-in { animation: iris-in 0.7s cubic-bezier(0.22, 1, 0.36, 1) both; }
+@keyframes iris-in { from { clip-path: circle(0% at 30% 70%); } to { clip-path: circle(150% at 30% 70%); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .nova *, .toon * { animation: none !important; }
+  .toon .t-draw { stroke-dashoffset: 0; }
+  .toon .t-cycle:first-of-type { opacity: 1; }
+  .write-on, .stamp-in, .note-in, .iris-in, .bubble-hop { animation: none !important; clip-path: none; }
+}
+.nova-mini { --mouth: 0; }
+.nova-mini .mouth-mini { transform-box: view-box; transform-origin: 50px 67px; transform: scaleY(calc(0.22 + var(--mouth) * 0.95)); transition: transform 0.06s linear; }
+.toon-in { animation: toon-in 0.9s cubic-bezier(0.34, 1.56, 0.64, 1) both; animation-delay: 0.25s; }
+@keyframes toon-in { from { transform: translateY(24px) scale(0.7) rotate(-5deg); opacity: 0; } to { transform: none; opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .toon-in { animation: none; } }

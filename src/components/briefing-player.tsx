@@ -8,7 +8,7 @@ import clsx from "clsx";
 import { SceneGate } from "@/components/three/gate";
 import { AiPresenter } from "@/components/ai-presenter";
 import { CountUp } from "@/components/motion";
-import { narrate } from "@/lib/video/narrator";
+import { narrate, prefetchClips, primeNarration } from "@/lib/video/narrator";
 import { startPad, type AudioEngine } from "@/lib/audio/ambient";
 import type { BriefingScene } from "@/lib/video/briefing";
 
@@ -138,8 +138,8 @@ export function BriefingPlayer({ scenes, firstName, firstTask }: { scenes: Brief
   const [captions, setCaptions] = useState(true);
   const [sentence, setSentence] = useState(0);
   const [word, setWord] = useState(-1);
-  const [pulse, setPulse] = useState(0);
   const audio = useRef<AudioEngine | null>(null);
+  const mini = useRef<HTMLDivElement>(null);
   const s = scenes[idx];
   const total = scenes.reduce((a, x) => a + x.seconds, 0);
 
@@ -161,17 +161,17 @@ export function BriefingPlayer({ scenes, firstName, firstTask }: { scenes: Brief
     return narrate(s.narration, {
       muted,
       minSeconds: s.seconds,
+      audio: s.audio,
       onSentence: (i) => {
         setSentence(i);
         setWord(-1);
+        if (i >= s.narration.length - 2) prefetchClips(scenes[idx + 1]?.audio?.slice(0, 2) ?? []);
       },
-      onWord: (_, w) => {
-        setWord(w);
-        setPulse((p) => p + 1);
-      },
+      onWord: (_, w) => setWord(w),
+      onLevel: (l) => mini.current?.style.setProperty("--mouth", l.toFixed(3)),
       onDone: next,
     });
-  }, [playing, idx, muted, s, next]);
+  }, [playing, idx, muted, s, scenes, next]);
 
   useEffect(() => {
     if (playing && music && !audio.current) audio.current = startPad("uplift", 0.22);
@@ -187,6 +187,7 @@ export function BriefingPlayer({ scenes, firstName, firstTask }: { scenes: Brief
   }, []);
 
   const play = () => {
+    primeNarration();
     if (finished) {
       setFinished(false);
       setIdx(0);
@@ -258,7 +259,7 @@ export function BriefingPlayer({ scenes, firstName, firstTask }: { scenes: Brief
         )}
 
         <div className="absolute inset-x-0 bottom-0 z-30 flex items-center gap-3 bg-gradient-to-t from-black/70 to-transparent px-4 pb-3 pt-8 sm:px-6">
-          <AiPresenter speaking={playing && !muted} pulse={pulse} size={40} label={false} />
+          <AiPresenter ref={mini} speaking={playing && !muted} size={40} label={false} />
           <div className="flex flex-1 gap-1" aria-hidden>
             {scenes.map((_, i) => (
               <span key={i} className="h-1 flex-1 overflow-hidden rounded-full bg-white/15">

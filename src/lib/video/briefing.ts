@@ -34,6 +34,8 @@ export interface BriefingScene {
   stats?: { label: string; value: number; display: string }[];
   narration: string[];
   seconds: number;
+  /** Natural-voice clip URL for each narration sentence (added on the server when available). */
+  audio?: (string | null)[];
 }
 
 const MINDSET = [

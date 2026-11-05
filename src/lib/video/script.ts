@@ -20,9 +20,13 @@ export type Scene = {
   lines: string[];
   /** Highlighted text, e.g. a formula expression or an answer. */
   highlight?: string;
+  /** Longer on-screen text, e.g. the problem statement of a worked example. */
+  body?: string;
   narration: string[]; // sentences, spoken in order
   seconds: number; // estimated duration at 1× speed
   quiz?: QuizCheckpoint; // interactive checkpoint (kind "quiz"); answers are graded on the server
+  /** Natural-voice clip URL for each narration sentence (added on the server when available). */
+  audio?: (string | null)[];
 };
 
 type LessonInput = {
@@ -62,9 +66,21 @@ export function firstSentences(text: string, n: number, maxChars = 420) {
   return out;
 }
 
-/** Makes symbols readable for text-to-speech (σ → sigma, × → times, …). */
+// Spoken forms of common finance abbreviations (whole words only).
+const SPOKEN: [RegExp, string][] = [
+  [/\bPV\b/g, "present value"],
+  [/\bFV\b/g, "future value"],
+  [/\bPMT\b/g, "payment"],
+  [/\bYTM\b/g, "yield to maturity"],
+  [/\bP\/E\b/g, "P E"],
+  [/\bvs\.?(?=\s)/gi, "versus"],
+  [/\bapprox\.(?=\s)/gi, "approximately"],
+  [/\betc\./gi, "and so on"],
+];
+
+/** Makes symbols and shorthand readable for text-to-speech (σ → sigma, × → times, PV → present value, …). */
 export function speakable(text: string) {
-  return text
+  let t = text
     .replace(/σ²/g, "sigma squared")
     .replace(/σ/g, "sigma")
     .replace(/β/g, "beta")
@@ -78,13 +94,19 @@ export function speakable(text: string) {
     .replace(/≥/g, " at least ")
     .replace(/≤/g, " at most ")
     .replace(/−/g, " minus ")
+    .replace(/\s=\s/g, " equals ")
+    .replace(/\s\+\s/g, " plus ")
+    .replace(/\s\/\s/g, " divided by ")
     .replace(/\^2\b/g, " squared")
     .replace(/\^/g, " to the power ")
     .replace(/₹\s?/g, "rupees ")
+    .replace(/\s·\s/g, ", ")
+    .replace(/\s[—–]\s/g, ", ")
+    .replace(/&/g, " and ")
     .replace(/\be\.g\./gi, "for example")
-    .replace(/\bi\.e\./gi, "that is")
-    .replace(/\s{2,}/g, " ")
-    .trim();
+    .replace(/\bi\.e\./gi, "that is");
+  for (const [re, spoken] of SPOKEN) t = t.replace(re, spoken);
+  return t.replace(/\s+([,.;:!?])/g, "$1").replace(/,{2,}/g, ",").replace(/\s{2,}/g, " ").trim();
 }
 
 function seconds(narration: string[], extra = 0) {
@@ -143,6 +165,7 @@ export function buildExplainer(input: LessonInput): Scene[] {
         heading: ex.title,
         lines: steps,
         highlight: ex.answer,
+        body: ex.problem,
         narration: [...firstSentences(ex.problem, 3, 360), ...steps.map((s, i) => `Step ${i + 1}. ${s}`), `So the answer is ${ex.answer}.`],
         extra: 3,
       }),

@@ -4,6 +4,8 @@ import { lessonContentSchema } from "@/server/content/lesson-schema";
 import { buildExplainer } from "@/lib/video/script";
 import { choicePayloadSchema } from "@/server/assessment/question-schema";
 import { createRng, shuffle } from "@/server/assessment/selection";
+import { narrationUrls } from "@/server/speech/narration";
+import { themeFor } from "@/lib/video/themes";
 
 function seed(id: string) {
   let h = 2166136261;
@@ -38,5 +40,10 @@ export async function getLessonExplainer(lessonId: string) {
     formulas: formulas.map((f) => ({ ...f, variables: Array.isArray(f.variables) ? (f.variables as { symbol?: string; meaning?: string }[]) : [] })),
     quiz,
   });
-  return { lesson, scenes };
+  // Natural-voice clip URLs per sentence (null entries fall back to the device voice).
+  return {
+    lesson,
+    theme: themeFor(lesson.title, lesson.topic.name, lesson.topic.parent?.name),
+    scenes: scenes.map((s) => ({ ...s, audio: narrationUrls(s.narration) })),
+  };
 }

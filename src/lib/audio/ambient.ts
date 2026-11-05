@@ -30,6 +30,19 @@ function context(): AudioContext | null {
   }
 }
 
+/** A generated room reverb (decaying stereo noise), so the synth sounds warm rather than electronic. */
+function reverb(ctx: AudioContext, seconds = 2.6, decay = 2.8) {
+  const len = Math.floor(ctx.sampleRate * seconds);
+  const ir = ctx.createBuffer(2, len, ctx.sampleRate);
+  for (let ch = 0; ch < 2; ch++) {
+    const d = ir.getChannelData(ch);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, decay);
+  }
+  const node = ctx.createConvolver();
+  node.buffer = ir;
+  return node;
+}
+
 /** Soft evolving pad with a gentle arpeggio on top. */
 export function startPad(mood: Mood = "uplift", volume = 0.35): AudioEngine | null {
   const ctx = context();
@@ -39,7 +52,7 @@ export function startPad(mood: Mood = "uplift", volume = 0.35): AudioEngine | nu
   master.gain.linearRampToValueAtTime(volume, ctx.currentTime + 2.5);
   const filter = ctx.createBiquadFilter();
   filter.type = "lowpass";
-  filter.frequency.value = 1100;
+  filter.frequency.value = 950;
   filter.Q.value = 0.6;
   const lfo = ctx.createOscillator();
   const lfoGain = ctx.createGain();
@@ -53,9 +66,13 @@ export function startPad(mood: Mood = "uplift", volume = 0.35): AudioEngine | nu
   const fb = ctx.createGain();
   fb.gain.value = 0.32;
   delay.connect(fb).connect(delay);
+  const room = reverb(ctx);
+  const wet = ctx.createGain();
+  wet.gain.value = 0.55;
   filter.connect(master);
   filter.connect(delay);
   delay.connect(master);
+  filter.connect(room).connect(wet).connect(master);
   master.connect(ctx.destination);
 
   const chords = PROGRESSIONS[mood];
@@ -95,7 +112,7 @@ export function startPad(mood: Mood = "uplift", volume = 0.35): AudioEngine | nu
         const g = ctx.createGain();
         const ts = t0 + k * step;
         g.gain.setValueAtTime(0.0001, ts);
-        g.gain.exponentialRampToValueAtTime(0.035, ts + 0.02);
+        g.gain.exponentialRampToValueAtTime(mood === "focus" ? 0.018 : 0.03, ts + 0.03);
         g.gain.exponentialRampToValueAtTime(0.0001, ts + step * 1.6);
         o.connect(g).connect(filter);
         o.start(ts);
