@@ -4,7 +4,10 @@ const securityHeaders = [
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "X-Frame-Options", value: "DENY" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-  { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=()" },
+  // The microphone is allowed for this origin only, for the Voice Drill's speech recognition (the browser still asks the
+  // learner). It has to be site-wide: the policy is fixed when a document loads, and the drill is usually reached by
+  // client-side navigation from another page.
+  { key: "Permissions-Policy", value: "camera=(), microphone=(self), geolocation=()" },
 ];
 
 const nextConfig: NextConfig = {
